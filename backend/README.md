@@ -33,7 +33,7 @@ npm run dev
 
 ## API Documentation
 
-Once the server is running, visit `http://localhost:6000/api-docs` for Swagger documentation.
+Once the server is running, visit `http://localhost:3001/api-docs` for Swagger documentation.
 
 ## Database Schema
 
