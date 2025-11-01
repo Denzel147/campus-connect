@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "Mbabazi31?",
+    "database": "campus_connect_db",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "Mbabazi31?",
+    "database": "campus_connect_db",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "Mbabazi31?",
+    "database": "campus_connect_db",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
