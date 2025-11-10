@@ -1,0 +1,14 @@
+{
+  "name": "campus-connect-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for CampusConnect",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node server.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-react": "^7.23.0"
+  }
+}
+

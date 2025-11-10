@@ -3,8 +3,9 @@ const { useState } = React;
 // Icon components using Lucide
 const Icon = ({ name, size = 24, ...props }) => {
   React.useEffect(() => {
-    lucide.createIcons();
-  });
+    // Only (re)initialize icons when the icon name changes
+    try { lucide.createIcons(); } catch {}
+  }, [name]);
   return React.createElement('i', { 
     'data-lucide': name, 
     width: size, 
@@ -45,9 +46,65 @@ const CampusConnect = () => {
       return localStorage.getItem('theme') || 'light';
     } catch { return 'light'; }
   });
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('notificationSettings');
+      return saved ? JSON.parse(saved) : {
+        emailNotifications: true,
+        pushNotifications: true,
+        bookRequests: true,
+        newBooks: true,
+        messages: true
+      };
+    } catch {
+      return {
+        emailNotifications: true,
+        pushNotifications: true,
+        bookRequests: true,
+        newBooks: true,
+        messages: true
+      };
+    }
+  });
+  const [privacySettings, setPrivacySettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('privacySettings');
+      return saved ? JSON.parse(saved) : {
+        profileVisible: true,
+        showEmail: false,
+        showPhone: false,
+        showDepartment: true,
+        allowMessages: true
+      };
+    } catch {
+      return {
+        profileVisible: true,
+        showEmail: false,
+        showPhone: false,
+        showDepartment: true,
+        allowMessages: true
+      };
+    }
+  });
 
+  // Apply theme immediately on mount
   React.useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+  }, []);
+
+  // Update theme when it changes
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
     if (theme === 'dark') {
       root.setAttribute('data-theme', 'dark');
     } else {
@@ -68,6 +125,8 @@ const CampusConnect = () => {
     return () => clearTimeout(t);
   }, []);
   React.useEffect(() => { try { localStorage.setItem('favorites', JSON.stringify(favorites)); } catch {} }, [favorites]);
+  React.useEffect(() => { try { localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings)); } catch {} }, [notificationSettings]);
+  React.useEffect(() => { try { localStorage.setItem('privacySettings', JSON.stringify(privacySettings)); } catch {} }, [privacySettings]);
 
   const toggleFavorite = (title) => {
     setFavorites((prev) => prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]);
@@ -90,9 +149,7 @@ const CampusConnect = () => {
     setTimeout(() => setToasts((prev) => prev.filter(t => t.id !== id)), 2200);
   };
 
-  React.useEffect(() => {
-    try { localStorage.setItem('favorites', JSON.stringify(favorites)); } catch {}
-  }, [favorites]);
+  // removed duplicate favorites persistence effect
 
   // Sample data - just book titles available for borrowing
   const [availableBooks, setAvailableBooks] = useState([
@@ -111,7 +168,7 @@ const CampusConnect = () => {
   // Books the current user has listed
   const [myListedBooks, setMyListedBooks] = useState([]);
 
-  // Form state for lending a book
+  // Form state for lending a book - SIMPLIFIED
   const [lendForm, setLendForm] = useState({
     studentName: '',
     email: '',
@@ -122,10 +179,37 @@ const CampusConnect = () => {
     availableFrom: '',
     availableUntil: ''
   });
+  const [submitErrors, setSubmitErrors] = useState({});
 
-  const handleLendSubmit = () => {
-    if (!lendForm.studentName || !lendForm.email || !lendForm.bookTitle) {
-      showToast('Please fill in all required fields', 'error');
+  // Validate form on submit only
+  const validateForm = () => {
+    const errors = {};
+    if (!lendForm.studentName.trim()) {
+      errors.studentName = 'Name is required.';
+    } else if (lendForm.studentName.trim().length < 2) {
+      errors.studentName = 'Name must be at least 2 characters.';
+    }
+    if (!lendForm.email.trim()) {
+      errors.email = 'Email is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lendForm.email.trim())) {
+      errors.email = 'Please enter a valid email address.';
+    }
+    if (!lendForm.bookTitle.trim()) {
+      errors.bookTitle = 'Book title is required.';
+    }
+    if (lendForm.phoneNumber.trim() && !/^\+?[0-9\s\-()]{7,15}$/.test(lendForm.phoneNumber.trim())) {
+      errors.phoneNumber = 'Please enter a valid phone number.';
+    }
+    return errors;
+  };
+
+  const handleLendSubmit = (e) => {
+    e.preventDefault();
+    const errors = validateForm();
+    
+    if (Object.keys(errors).length > 0) {
+      setSubmitErrors(errors);
+      showToast('Please fill in all required fields correctly', 'error');
       return;
     }
 
@@ -135,12 +219,15 @@ const CampusConnect = () => {
       listedDate: new Date().toISOString().split('T')[0]
     };
 
-    setMyListedBooks([...myListedBooks, newListing]);
+    setMyListedBooks(prev => [...prev, newListing]);
     
-    // Add to available books if not already there
-    if (!availableBooks.includes(lendForm.bookTitle)) {
-      setAvailableBooks([...availableBooks, lendForm.bookTitle]);
-    }
+    const bookTitleTrimmed = lendForm.bookTitle.trim();
+    setAvailableBooks(prev => {
+      if (!prev.includes(bookTitleTrimmed)) {
+        return [...prev, bookTitleTrimmed];
+      }
+      return prev;
+    });
 
     showToast('Book listed successfully!', 'success');
     
@@ -155,6 +242,7 @@ const CampusConnect = () => {
       availableFrom: '',
       availableUntil: ''
     });
+    setSubmitErrors({});
   };
 
   const filteredBooks = availableBooks.filter(book => book.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -276,7 +364,7 @@ const CampusConnect = () => {
           </ul>
         </div>
 
-        <div className="form-container">
+        <form className="form-container" onSubmit={handleLendSubmit}>
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label" htmlFor="lend-name">
@@ -288,8 +376,18 @@ const CampusConnect = () => {
                 placeholder="Enter your full name"
                 value={lendForm.studentName}
                 id="lend-name"
-                onChange={(e) => setLendForm({...lendForm, studentName: e.target.value})}
+                name="name"
+                autoComplete="name"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLendForm(function(prev) {
+                    return { ...prev, studentName: val };
+                  });
+                }}
               />
+              {submitErrors.studentName && (
+                <p className="form-error">{submitErrors.studentName}</p>
+              )}
             </div>
 
             <div className="form-group">
@@ -302,8 +400,18 @@ const CampusConnect = () => {
                 placeholder="your.email@university.edu"
                 value={lendForm.email}
                 id="lend-email"
-                onChange={(e) => setLendForm({...lendForm, email: e.target.value})}
+                name="email"
+                autoComplete="email"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLendForm(function(prev) {
+                    return { ...prev, email: val };
+                  });
+                }}
               />
+              {submitErrors.email && (
+                <p className="form-error">{submitErrors.email}</p>
+              )}
             </div>
           </div>
 
@@ -316,8 +424,19 @@ const CampusConnect = () => {
                 placeholder="+234 800 000 0000"
                 value={lendForm.phoneNumber}
                 id="lend-phone"
-                onChange={(e) => setLendForm({...lendForm, phoneNumber: e.target.value})}
+                name="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLendForm(function(prev) {
+                    return { ...prev, phoneNumber: val };
+                  });
+                }}
               />
+              {submitErrors.phoneNumber && (
+                <p className="form-error">{submitErrors.phoneNumber}</p>
+              )}
             </div>
 
             <div className="form-group">
@@ -325,10 +444,17 @@ const CampusConnect = () => {
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. Computer Science"
-                value={lendForm.department}
+                placeholder="e.g. Computer Science, Biology, Chemistry"
+                value={lendForm.department || ''}
                 id="lend-dept"
-                onChange={(e) => setLendForm({...lendForm, department: e.target.value})}
+                name="organization-title"
+                autoComplete="off"
+                onInput={(e) => {
+                  setLendForm((prev) => ({ ...prev, department: e.target.value }));
+                }}
+                onChange={(e) => {
+                  setLendForm((prev) => ({ ...prev, department: e.target.value }));
+                }}
               />
             </div>
           </div>
@@ -341,10 +467,20 @@ const CampusConnect = () => {
               type="text"
               className="form-input"
               placeholder="Enter the book title"
-              value={lendForm.bookTitle}
+              value={lendForm.bookTitle || ''}
               id="lend-title"
-              onChange={(e) => setLendForm({...lendForm, bookTitle: e.target.value})}
+              name="book-title"
+              autoComplete="off"
+              onInput={(e) => {
+                setLendForm((prev) => ({ ...prev, bookTitle: e.target.value }));
+              }}
+              onChange={(e) => {
+                setLendForm((prev) => ({ ...prev, bookTitle: e.target.value }));
+              }}
             />
+            {submitErrors.bookTitle && (
+              <p className="form-error">{submitErrors.bookTitle}</p>
+            )}
           </div>
 
           <div className="form-group">
@@ -353,7 +489,12 @@ const CampusConnect = () => {
               className="form-input"
               value={lendForm.condition}
               id="lend-condition"
-              onChange={(e) => setLendForm({...lendForm, condition: e.target.value})}
+              onChange={(e) => {
+                const val = e.target.value;
+                setLendForm(function(prev) {
+                  return { ...prev, condition: val };
+                });
+              }}
             >
               <option>Like New</option>
               <option>Good</option>
@@ -370,7 +511,13 @@ const CampusConnect = () => {
                 className="form-input"
                 value={lendForm.availableFrom}
                 id="lend-from"
-                onChange={(e) => setLendForm({...lendForm, availableFrom: e.target.value})}
+                name="available-from"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLendForm(function(prev) {
+                    return { ...prev, availableFrom: val };
+                  });
+                }}
               />
             </div>
 
@@ -381,18 +528,24 @@ const CampusConnect = () => {
                 className="form-input"
                 value={lendForm.availableUntil}
                 id="lend-until"
-                onChange={(e) => setLendForm({...lendForm, availableUntil: e.target.value})}
+                name="available-until"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLendForm(function(prev) {
+                    return { ...prev, availableUntil: val };
+                  });
+                }}
               />
             </div>
           </div>
 
           <button
-            onClick={handleLendSubmit}
+            type="submit"
             className="btn btn-primary btn-full"
           >
             List Book for Lending
           </button>
-        </div>
+        </form>
       </div>
 
       {myListedBooks.length > 0 && (
@@ -464,11 +617,245 @@ const CampusConnect = () => {
       <div className="card">
         <h3 className="section-title">Settings</h3>
         <div className="settings-list">
-          <button className="settings-item">Notification Preferences</button>
-          <button className="settings-item">Privacy Settings</button>
-          <button className="settings-item settings-logout">Logout</button>
+          <button 
+            className="settings-item"
+            onClick={() => setNotificationsOpen(true)}
+          >
+            Notification Preferences
+          </button>
+          <button 
+            className="settings-item"
+            onClick={() => setPrivacyOpen(true)}
+          >
+            Privacy Settings
+          </button>
+          <button 
+            className="settings-item settings-logout"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to logout?')) {
+                showToast('Logged out successfully', 'info');
+                // In a real app, you would clear auth tokens and redirect
+              }
+            }}
+          >
+            Logout
+          </button>
         </div>
       </div>
+
+      {/* Notification Preferences Modal */}
+      {notificationsOpen && (
+        <div className="modal-backdrop" onClick={() => setNotificationsOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Notification Preferences</div>
+              <button 
+                className="btn" 
+                style={{ border: '1px solid var(--border)', background: 'transparent' }} 
+                onClick={() => setNotificationsOpen(false)}
+                aria-label="Close"
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Email Notifications</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.emailNotifications}
+                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, emailNotifications: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Receive notifications via email
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Push Notifications</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.pushNotifications}
+                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, pushNotifications: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Receive browser push notifications
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Book Requests</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.bookRequests}
+                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, bookRequests: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Get notified when someone requests your book
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>New Books Available</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.newBooks}
+                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, newBooks: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Notify me when new books matching my interests are listed
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Messages</span>
+                  <input
+                    type="checkbox"
+                    checked={notificationSettings.messages}
+                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, messages: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Get notified when you receive messages
+                </p>
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    setNotificationsOpen(false);
+                    showToast('Notification preferences saved', 'success');
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Settings Modal */}
+      {privacyOpen && (
+        <div className="modal-backdrop" onClick={() => setPrivacyOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">Privacy Settings</div>
+              <button 
+                className="btn" 
+                style={{ border: '1px solid var(--border)', background: 'transparent' }} 
+                onClick={() => setPrivacyOpen(false)}
+                aria-label="Close"
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Profile Visible</span>
+                  <input
+                    type="checkbox"
+                    checked={privacySettings.profileVisible}
+                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, profileVisible: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Allow others to view your profile
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Show Email Address</span>
+                  <input
+                    type="checkbox"
+                    checked={privacySettings.showEmail}
+                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, showEmail: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Display your email address on your listings
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Show Phone Number</span>
+                  <input
+                    type="checkbox"
+                    checked={privacySettings.showPhone}
+                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, showPhone: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Display your phone number on your listings
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Show Department</span>
+                  <input
+                    type="checkbox"
+                    checked={privacySettings.showDepartment}
+                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, showDepartment: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Display your department on your profile
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span className="form-label" style={{ marginBottom: 0 }}>Allow Messages</span>
+                  <input
+                    type="checkbox"
+                    checked={privacySettings.allowMessages}
+                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, allowMessages: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+                <p className="about-text" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Allow other users to send you messages
+                </p>
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    setPrivacyOpen(false);
+                    showToast('Privacy settings saved', 'success');
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -491,12 +878,19 @@ const CampusConnect = () => {
               <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
               <span style={{ fontSize: '0.875rem' }}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
-            <div className="notification-icon" aria-label="Notifications">
+            <button
+              className="notification-icon"
+              onClick={() => {
+                showToast(`You have ${notifications} notification${notifications !== 1 ? 's' : ''}`, 'info');
+              }}
+              aria-label={`Notifications (${notifications} unread)`}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', position: 'relative' }}
+            >
               <Icon name="bell" size={24} />
               {notifications > 0 && (
                 <span className="notification-badge">{notifications}</span>
               )}
-            </div>
+            </button>
           </div>
         </div>
       </header>

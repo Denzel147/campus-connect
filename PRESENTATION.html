@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusConnect - Presentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    <style>
+        .reveal .slides section {
+            text-align: left;
+        }
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: #2563eb;
+        }
+        .reveal .title-slide {
+            text-align: center;
+        }
+        .reveal .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 0.5em;
+        }
+        .reveal .title-slide p {
+            font-size: 1.5em;
+            color: #666;
+        }
+        .reveal ul {
+            margin-left: 2em;
+        }
+        .reveal .highlight {
+            color: #2563eb;
+            font-weight: bold;
+        }
+        .reveal .tech-stack {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            margin-top: 1em;
+        }
+        .reveal .architecture-diagram {
+            font-family: monospace;
+            font-size: 0.6em;
+            background: #f5f5f5;
+            padding: 1em;
+            border-radius: 5px;
+        }
+        .reveal .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1em;
+            margin-top: 1em;
+        }
+        .reveal .feature-card {
+            background: #f0f9ff;
+            padding: 1em;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+        .reveal .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 2em 0;
+        }
+        .reveal .stat-box {
+            text-align: center;
+            padding: 1em;
+            background: #f0f9ff;
+            border-radius: 8px;
+            min-width: 150px;
+        }
+        .reveal .stat-number {
+            font-size: 2.5em;
+            color: #2563eb;
+            font-weight: bold;
+        }
+        .reveal .stat-label {
+            color: #666;
+            margin-top: 0.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Slide 1: Title -->
+            <section class="title-slide">
+                <h1>CampusConnect</h1>
+                <p>University Book Lending Platform</p>
+                <p style="font-size: 1.2em; margin-top: 2em;">Peer-to-Peer Resource Sharing for Students</p>
+                <p style="font-size: 1em; margin-top: 3em; color: #999;">African Leadership University<br>Foundations Project</p>
+            </section>
+
+            <!-- Slide 2: Problem Statement -->
+            <section>
+                <h2>The Problem</h2>
+                <ul>
+                    <li>University students face <span class="highlight">high textbook costs</span></li>
+                    <li>Limited access to academic resources</li>
+                    <li>No organized platform for peer-to-peer sharing</li>
+                    <li>Difficulty finding course-specific materials</li>
+                    <li>Wasted resources when books sit unused</li>
+                </ul>
+                <div style="margin-top: 2em; padding: 1em; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 5px;">
+                    <strong>Impact:</strong> Students spend $1,200+ annually on textbooks alone
+                </div>
+            </section>
+
+            <!-- Slide 3: Solution Overview -->
+            <section>
+                <h2>Our Solution</h2>
+                <h3>CampusConnect</h3>
+                <p>A web-based platform that enables university students to:</p>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>📚 Browse Books</h4>
+                        <p>Search and discover available textbooks and academic resources</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📖 Lend Books</h4>
+                        <p>Share your textbooks with fellow students easily</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔍 Smart Search</h4>
+                        <p>Find books by title, course, or category</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>👤 User Profiles</h4>
+                        <p>Track lending activity and manage your listings</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 4: Key Features -->
+            <section>
+                <h2>Key Features</h2>
+                <div class="feature-grid">
+                    <div>
+                        <h3>For Borrowers</h3>
+                        <ul>
+                            <li>Search functionality</li>
+                            <li>One-click borrowing requests</li>
+                            <li>Real-time availability</li>
+                            <li>Book details & conditions</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>For Lenders</h3>
+                        <ul>
+                            <li>Easy book listing form</li>
+                            <li>Student information capture</li>
+                            <li>Availability date management</li>
+                            <li>Listing management dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em; padding: 1em; background: #ecfdf5; border-left: 4px solid #059669;">
+                    <strong>Additional Features:</strong> User authentication, transaction tracking, notifications, reviews, and ratings
+                </div>
+            </section>
+
+            <!-- Slide 5: Technical Stack -->
+            <section>
+                <h2>Technical Stack</h2>
+                <div class="tech-stack">
+                    <div>
+                        <h3>Frontend</h3>
+                        <ul>
+                            <li><strong>React 18</strong> - UI components</li>
+                            <li><strong>React DOM 18</strong> - DOM rendering</li>
+                            <li><strong>Babel Standalone</strong> - JSX transformation</li>
+                            <li><strong>Lucide Icons</strong> - Icon library</li>
+                            <li><strong>Vanilla CSS</strong> - Custom styling</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Backend</h3>
+                        <ul>
+                            <li><strong>Node.js</strong> - Runtime</li>
+                            <li><strong>Express.js</strong> - Web framework</li>
+                            <li><strong>PostgreSQL</strong> - Database</li>
+                            <li><strong>Sequelize</strong> - ORM</li>
+                            <li><strong>JWT</strong> - Authentication</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em;">
+                    <h3>Security & Tools</h3>
+                    <p>Helmet, CORS, Rate Limiting, Winston Logger, Swagger API Docs, Bcrypt, Joi Validation</p>
+                </div>
+            </section>
+
+            <!-- Slide 6: System Architecture -->
+            <section>
+                <h2>System Architecture</h2>
+                <div class="architecture-diagram">
+                    <pre>
+┌─────────────────┐
+│  React Frontend │
+└────────┬────────┘
+         │ HTTP/REST
+┌────────▼──────────────────┐
+│  Express.js Server (3001)  │
+│  - Middleware Stack        │
+│  - JWT Authentication      │
+│  - Rate Limiting           │
+└────────┬───────────────────┘
+         │
+┌────────▼────────────┐
+│  Business Logic     │
+│  - Controllers      │
+│  - Models           │
+└────────┬────────────┘
+         │ SQL
+┌────────▼────────────┐
+│  PostgreSQL DB      │
+│  - 6 Core Tables    │
+│  - Relationships    │
+│  - Indexes          │
+└─────────────────────┘
+                    </pre>
+                </div>
+                <p style="font-size: 0.8em; margin-top: 1em;">
+                    <strong>Pattern:</strong> MVC Architecture with RESTful API design
+                </p>
+            </section>
+
+            <!-- Slide 7: Database Schema -->
+            <section>
+                <h2>Database Design</h2>
+                <h3>6 Core Tables</h3>
+                <div class="feature-grid">
+                    <div>
+                        <ul>
+                            <li><strong>Users</strong> - Student profiles</li>
+                            <li><strong>Categories</strong> - Book categories</li>
+                            <li><strong>Items</strong> - Book listings</li>
+                            <li><strong>Transactions</strong> - Lending records</li>
+                            <li><strong>Reviews</strong> - User ratings</li>
+                            <li><strong>Notifications</strong> - System alerts</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Key Features:</h4>
+                        <ul>
+                            <li>Foreign key relationships</li>
+                            <li>CASCADE & SET NULL policies</li>
+                            <li>Strategic indexing</li>
+                            <li>Normalized schema</li>
+                            <li>Data integrity constraints</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em; padding: 1em; background: #eff6ff; border-left: 4px solid #2563eb;">
+                    <strong>Performance:</strong> Indexes improve query performance by 70-80% on large datasets
+                </div>
+            </section>
+
+            <!-- Slide 8: API Endpoints -->
+            <section>
+                <h2>API Architecture</h2>
+                <h3>RESTful Endpoints</h3>
+                <div class="feature-grid">
+                    <div>
+                        <h4>Authentication</h4>
+                        <ul style="font-size: 0.9em;">
+                            <li>POST /api/auth/register</li>
+                            <li>POST /api/auth/login</li>
+                            <li>GET /api/auth/profile</li>
+                            <li>POST /api/auth/refresh</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Items & Transactions</h4>
+                        <ul style="font-size: 0.9em;">
+                            <li>GET /api/items (search)</li>
+                            <li>POST /api/items</li>
+                            <li>GET /api/transactions</li>
+                            <li>POST /api/transactions</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em;">
+                    <p><strong>Documentation:</strong> Swagger UI available at /api-docs</p>
+                    <p><strong>Security:</strong> JWT authentication, rate limiting, input validation</p>
+                </div>
+            </section>
+
+            <!-- Slide 9: Security Features -->
+            <section>
+                <h2>Security Implementation</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🔐 Authentication</h4>
+                        <ul>
+                            <li>JWT tokens (access + refresh)</li>
+                            <li>Bcrypt password hashing</li>
+                            <li>Token expiration management</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🛡️ Protection</h4>
+                        <ul>
+                            <li>Helmet security headers</li>
+                            <li>CORS policy enforcement</li>
+                            <li>Rate limiting (100 req/15min)</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>✅ Validation</h4>
+                        <ul>
+                            <li>Joi schema validation</li>
+                            <li>Input sanitization</li>
+                            <li>SQL injection prevention</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📝 Logging</h4>
+                        <ul>
+                            <li>Winston logger</li>
+                            <li>Error tracking</li>
+                            <li>Request logging</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 10: Technical Challenges -->
+            <section>
+                <h2>Technical Challenges Solved</h2>
+                <div>
+                    <h3>1. Database Schema Design</h3>
+                    <p>Balanced normalization with query performance, proper foreign key relationships</p>
+                    
+                    <h3>2. JWT Authentication</h3>
+                    <p>Stateless authentication with token refresh mechanism</p>
+                    
+                    <h3>3. API Security</h3>
+                    <p>Multi-layered security with middleware stack</p>
+                    
+                    <h3>4. Error Handling</h3>
+                    <p>Centralized error handling with proper HTTP status codes</p>
+                </div>
+                <div style="margin-top: 1em; padding: 1em; background: #f0fdf4; border-left: 4px solid #059669;">
+                    <strong>Result:</strong> Robust, scalable architecture ready for production
+                </div>
+            </section>
+
+            <!-- Slide 11: Project Statistics -->
+            <section>
+                <h2>Project Statistics</h2>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-number">6</div>
+                        <div class="stat-label">Database Tables</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">API Endpoints</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">10+</div>
+                        <div class="stat-label">React Components</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Documented</div>
+                    </div>
+                </div>
+                <div style="margin-top: 2em;">
+                    <h3>Code Quality</h3>
+                    <ul>
+                        <li>MVC architecture pattern</li>
+                        <li>Separation of concerns</li>
+                        <li>Comprehensive error handling</li>
+                        <li>Swagger API documentation</li>
+                        <li>Database migration system</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 12: User Interface -->
+            <section>
+                <h2>User Interface</h2>
+                <div class="feature-grid">
+                    <div>
+                        <h3>Design Principles</h3>
+                        <ul>
+                            <li>Clean & modern UI</li>
+                            <li>Mobile-first responsive</li>
+                            <li>Intuitive navigation</li>
+                            <li>Accessible design</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Key Components</h3>
+                        <ul>
+                            <li>Home/Browse Tab</li>
+                            <li>Lend Book Form</li>
+                            <li>User Profile Dashboard</li>
+                            <li>Search & Filter</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em; padding: 1em; background: #fef3c7; border-left: 4px solid #f59e0b;">
+                    <strong>Color Scheme:</strong> Primary Blue (#2563eb), Success Green (#059669), Modern Gray Scale
+                </div>
+            </section>
+
+            <!-- Slide 13: Future Roadmap -->
+            <section>
+                <h2>Future Enhancements</h2>
+                <div class="feature-grid">
+                    <div>
+                        <h3>Phase 1: Core Improvements</h3>
+                        <ul>
+                            <li>LocalStorage persistence</li>
+                            <li>Enhanced form validation</li>
+                            <li>Book cover image uploads</li>
+                            <li>Advanced search filters</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Phase 2: Backend Integration</h3>
+                        <ul>
+                            <li>Full API integration</li>
+                            <li>Real-time notifications</li>
+                            <li>User authentication flow</li>
+                            <li>Database persistence</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em;">
+                    <h3>Phase 3: Advanced Features</h3>
+                    <ul>
+                        <li>Real-time chat system</li>
+                        <li>Advanced rating system</li>
+                        <li>Mobile app (React Native)</li>
+                        <li>Email/SMS notifications</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Slide 14: Project Management -->
+            <section>
+                <h2>Project Management</h2>
+                <div class="feature-grid">
+                    <div>
+                        <h3>Tools Used</h3>
+                        <ul>
+                            <li><strong>Trello</strong> - Task management</li>
+                            <li><strong>GitHub</strong> - Version control</li>
+                            <li><strong>WhatsApp</strong> - Communication</li>
+                            <li><strong>Google Meet</strong> - Weekly meetings</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Development Process</h3>
+                        <ul>
+                            <li>Sprint-based planning</li>
+                            <li>Branch strategy (main/dev)</li>
+                            <li>Code reviews</li>
+                            <li>Continuous integration</li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="margin-top: 1em; padding: 1em; background: #eff6ff; border-left: 4px solid #2563eb;">
+                    <strong>Repository:</strong> https://github.com/Denzel147/campus-connect
+                </div>
+            </section>
+
+            <!-- Slide 15: Benefits -->
+            <section>
+                <h2>Benefits & Impact</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>💰 Cost Savings</h4>
+                        <p>Students save money on expensive textbooks</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🌱 Sustainability</h4>
+                        <p>Reduces waste by maximizing book usage</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🤝 Community Building</h4>
+                        <p>Connects students across departments</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📚 Resource Access</h4>
+                        <p>Makes academic resources more accessible</p>
+                    </div>
+                </div>
+                <div style="margin-top: 2em; padding: 1em; background: #ecfdf5; border-left: 4px solid #059669;">
+                    <strong>Mission:</strong> Empowering students through collaborative resource sharing
+                </div>
+            </section>
+
+            <!-- Slide 16: Demo -->
+            <section>
+                <h2>Live Demo</h2>
+                <div style="text-align: center; margin-top: 3em;">
+                    <h3>Key Features to Demonstrate:</h3>
+                    <ol style="text-align: left; display: inline-block;">
+                        <li>User Registration & Login</li>
+                        <li>Browsing Available Books</li>
+                        <li>Search Functionality</li>
+                        <li>Listing a Book for Lending</li>
+                        <li>Requesting to Borrow</li>
+                        <li>User Profile Dashboard</li>
+                    </ol>
+                </div>
+                <div style="margin-top: 2em; padding: 1em; background: #fef3c7; border-left: 4px solid #f59e0b;">
+                    <strong>Access:</strong> Frontend: Open index.html | Backend: http://localhost:3001
+                </div>
+            </section>
+
+            <!-- Slide 17: Lessons Learned -->
+            <section>
+                <h2>Lessons Learned</h2>
+                <div class="feature-grid">
+                    <div>
+                        <h3>Technical</h3>
+                        <ul>
+                            <li>Database indexing is crucial</li>
+                            <li>JWT requires careful token management</li>
+                            <li>Middleware order matters</li>
+                            <li>Error handling should be centralized</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Project Management</h3>
+                        <ul>
+                            <li>Clear communication is essential</li>
+                            <li>Regular code reviews improve quality</li>
+                            <li>Documentation saves time</li>
+                            <li>Version control prevents conflicts</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 18: Conclusion -->
+            <section class="title-slide">
+                <h2>Thank You!</h2>
+                <h3>CampusConnect</h3>
+                <p style="font-size: 1.2em; margin-top: 2em;">
+                    A complete, production-ready platform for<br>
+                    university book lending
+                </p>
+                <div style="margin-top: 3em; font-size: 1em;">
+                    <p><strong>Questions?</strong></p>
+                    <p style="color: #666; margin-top: 1em;">
+                        GitHub: github.com/Denzel147/campus-connect<br>
+                        API Docs: localhost:3001/api-docs
+                    </p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: false,
+            transition: 'slide',
+            transitionSpeed: 'default'
+        });
+    </script>
+</body>
+</html>

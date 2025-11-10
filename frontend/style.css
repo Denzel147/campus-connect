@@ -220,6 +220,12 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.form-error {
+    color: var(--danger);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
 /* Buttons */
 .btn {
     padding: 0.5rem 1rem;
@@ -461,24 +467,7 @@ body {
     --container-max: 1152px;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #0b1220;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --card: #0f172a;
-        --border: #1f2937;
-        --primary: #60a5fa;
-        --primary-hover: #93c5fd;
-        --danger: #f87171;
-        --success-bg: #064e3b;
-        --success-text: #d1fae5;
-        --info-bg: #1e3a8a;
-        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
-    }
-}
-
-/* Manual override via data-theme attribute */
+/* Manual override via data-theme attribute - must come after media query for higher specificity */
 html[data-theme="dark"] {
     --bg: #0b1220;
     --text: #e5e7eb;
@@ -492,6 +481,30 @@ html[data-theme="dark"] {
     --success-text: #d1fae5;
     --info-bg: #1e3a8a;
     --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Override media query when manual theme is set */
+html[data-theme="dark"] body {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Only apply if no manual theme is set */
+    html:not([data-theme]) :root {
+        --bg: #0b1220;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #0f172a;
+        --border: #1f2937;
+        --primary: #60a5fa;
+        --primary-hover: #93c5fd;
+        --danger: #f87171;
+        --success-bg: #064e3b;
+        --success-text: #d1fae5;
+        --info-bg: #1e3a8a;
+        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    }
 }
 
 /* Sticky search under header */
