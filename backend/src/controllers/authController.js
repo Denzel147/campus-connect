@@ -3,6 +3,10 @@ const User = require('../models/User');
 const logger = require('../config/logger');
 
 const generateTokens = (userId) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  
   const payload = { userId };
   
   const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -109,6 +113,13 @@ const refreshToken = async (req, res, next) => {
       });
     }
 
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error'
+      });
+    }
+    
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     
     // Verify user still exists and is active

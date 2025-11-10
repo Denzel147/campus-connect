@@ -14,6 +14,14 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET is not set in environment variables');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error'
+      });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Verify user still exists and is active
@@ -76,6 +84,11 @@ const optionalAuth = async (req, res, next) => {
   }
 
   try {
+    if (!process.env.JWT_SECRET) {
+      req.user = null;
+      return next();
+    }
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { rows } = await db.query(
       'SELECT user_id, email FROM users WHERE user_id = $1 AND account_status = $2',
