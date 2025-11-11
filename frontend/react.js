@@ -346,234 +346,194 @@ const CampusConnect = () => {
     </div>
   );
 
-  const LendBookTab = () => (
-    <div className="space-y-4">
-      <div className="card">
-        <h2 className="page-title">
-          <Icon name="plus" size={24} className="title-icon" />
-          Lend a Book
-        </h2>
+const LendBookTab = () => (
+  <div className="space-y-4">
+    <div className="card">
+      <h2 className="page-title">
+        <Icon name="plus" size={24} className="title-icon" />
+        Lend a Book
+      </h2>
 
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <h3 className="section-title">Smart Suggestions</h3>
-          <ul className="about-text" style={{ paddingLeft: '1rem' }}>
-            <li>Auto-suggest category based on course</li>
-            <li>Common for {selectedCourse}</li>
-            <li>Smart pricing: Similar items rent for $5–10/week</li>
-            <li>Timing tip: Set return before finals week</li>
-          </ul>
-        </div>
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3 className="section-title">Smart Suggestions</h3>
+        <ul className="about-text" style={{ paddingLeft: '1rem' }}>
+          <li>Auto-suggest category based on course</li>
+          <li>Common for {selectedCourse}</li>
+          <li>Smart pricing: Similar items rent for $5–10/week</li>
+          <li>Timing tip: Set return before finals week</li>
+        </ul>
+      </div>
 
-        <form className="form-container" onSubmit={handleLendSubmit}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label" htmlFor="lend-name">
-                Your Name <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Enter your full name"
-                value={lendForm.studentName}
-                id="lend-name"
-                name="name"
-                autoComplete="name"
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setLendForm(function(prev) {
-                    return { ...prev, studentName: val };
-                  });
-                }}
-              />
-              {submitErrors.studentName && (
-                <p className="form-error">{submitErrors.studentName}</p>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="lend-email">
-                Email <span className="required">*</span>
-              </label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="your.email@university.edu"
-                value={lendForm.email}
-                id="lend-email"
-                name="email"
-                autoComplete="email"
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setLendForm(function(prev) {
-                    return { ...prev, email: val };
-                  });
-                }}
-              />
-              {submitErrors.email && (
-                <p className="form-error">{submitErrors.email}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label" htmlFor="lend-phone">Phone Number</label>
-              <input
-                type="tel"
-                className="form-input"
-                placeholder="+234 800 000 0000"
-                value={lendForm.phoneNumber}
-                id="lend-phone"
-                name="tel"
-                autoComplete="tel"
-                inputMode="tel"
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setLendForm(function(prev) {
-                    return { ...prev, phoneNumber: val };
-                  });
-                }}
-              />
-              {submitErrors.phoneNumber && (
-                <p className="form-error">{submitErrors.phoneNumber}</p>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="lend-dept">Department</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. Computer Science, Biology, Chemistry"
-                value={lendForm.department || ''}
-                id="lend-dept"
-                name="organization-title"
-                autoComplete="off"
-                onInput={(e) => {
-                  setLendForm((prev) => ({ ...prev, department: e.target.value }));
-                }}
-                onChange={(e) => {
-                  setLendForm((prev) => ({ ...prev, department: e.target.value }));
-                }}
-              />
-            </div>
-          </div>
-
+      <form className="form-container" onSubmit={handleLendSubmit}>
+        <div className="form-grid">
           <div className="form-group">
-            <label className="form-label" htmlFor="lend-title">
-              Book Title <span className="required">*</span>
+            <label className="form-label" htmlFor="lend-name">
+              Your Name <span className="required">*</span>
             </label>
             <input
               type="text"
               className="form-input"
-              placeholder="Enter the book title"
-              value={lendForm.bookTitle || ''}
-              id="lend-title"
-              name="book-title"
-              autoComplete="off"
-              onInput={(e) => {
-                setLendForm((prev) => ({ ...prev, bookTitle: e.target.value }));
-              }}
-              onChange={(e) => {
-                setLendForm((prev) => ({ ...prev, bookTitle: e.target.value }));
-              }}
+              placeholder="Enter your full name"
+              value={lendForm.studentName}
+              id="lend-name"
+              name="name"
+              autoComplete="name"
+              onChange={(e) => setLendForm(prev => ({ ...prev, studentName: e.target.value }))}
             />
-            {submitErrors.bookTitle && (
-              <p className="form-error">{submitErrors.bookTitle}</p>
+            {submitErrors.studentName && (
+              <p className="form-error">{submitErrors.studentName}</p>
             )}
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="lend-condition">Book Condition</label>
-            <select
+            <label className="form-label" htmlFor="lend-email">
+              Email <span className="required">*</span>
+            </label>
+            <input
+              type="email"
               className="form-input"
-              value={lendForm.condition}
-              id="lend-condition"
-              onChange={(e) => {
-                const val = e.target.value;
-                setLendForm(function(prev) {
-                  return { ...prev, condition: val };
-                });
-              }}
-            >
-              <option>Like New</option>
-              <option>Good</option>
-              <option>Fair</option>
-              <option>Poor</option>
-            </select>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label className="form-label" htmlFor="lend-from">Available From</label>
-              <input
-                type="date"
-                className="form-input"
-                value={lendForm.availableFrom}
-                id="lend-from"
-                name="available-from"
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setLendForm(function(prev) {
-                    return { ...prev, availableFrom: val };
-                  });
-                }}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="lend-until">Available Until</label>
-              <input
-                type="date"
-                className="form-input"
-                value={lendForm.availableUntil}
-                id="lend-until"
-                name="available-until"
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setLendForm(function(prev) {
-                    return { ...prev, availableUntil: val };
-                  });
-                }}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary btn-full"
-          >
-            List Book for Lending
-          </button>
-        </form>
-      </div>
-
-      {myListedBooks.length > 0 && (
-        <div className="card">
-          <h3 className="section-title">Your Listed Books</h3>
-          <div className="listed-books">
-            {myListedBooks.map((book) => (
-              <div key={book.id} className="listed-book-item">
-                <div className="listed-book-content">
-                  <div>
-                    <h4 className="listed-book-title">{book.bookTitle}</h4>
-                    <p className="listed-book-detail">Condition: {book.condition}</p>
-                    <p className="listed-book-detail">Contact: {book.email}</p>
-                    {book.availableFrom && book.availableUntil && (
-                      <p className="listed-book-date">
-                        Available: {book.availableFrom} to {book.availableUntil}
-                      </p>
-                    )}
-                  </div>
-                  <span className="badge badge-success">Active</span>
-                </div>
-              </div>
-            ))}
+              placeholder="your.email@university.edu"
+              value={lendForm.email}
+              id="lend-email"
+              name="email"
+              autoComplete="email"
+              onChange={(e) => setLendForm(prev => ({ ...prev, email: e.target.value }))}
+            />
+            {submitErrors.email && (
+              <p className="form-error">{submitErrors.email}</p>
+            )}
           </div>
         </div>
-      )}
+
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label" htmlFor="lend-phone">Phone Number</label>
+            <input
+              type="tel"
+              className="form-input"
+              placeholder="+234 800 000 0000"
+              value={lendForm.phoneNumber}
+              id="lend-phone"
+              name="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              onChange={(e) => setLendForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+            />
+            {submitErrors.phoneNumber && (
+              <p className="form-error">{submitErrors.phoneNumber}</p>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="lend-dept">Department</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g. Computer Science, Biology, Chemistry"
+              value={lendForm.department}
+              id="lend-dept"
+              name="organization-title"
+              autoComplete="off"
+              onChange={(e) => setLendForm(prev => ({ ...prev, department: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="lend-title">
+            Book Title <span className="required">*</span>
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Enter the book title"
+            value={lendForm.bookTitle}
+            id="lend-title"
+            name="book-title"
+            autoComplete="off"
+            onChange={(e) => setLendForm(prev => ({ ...prev, bookTitle: e.target.value }))}
+          />
+          {submitErrors.bookTitle && (
+            <p className="form-error">{submitErrors.bookTitle}</p>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="lend-condition">Book Condition</label>
+          <select
+            className="form-input"
+            value={lendForm.condition}
+            id="lend-condition"
+            onChange={(e) => setLendForm(prev => ({ ...prev, condition: e.target.value }))}
+          >
+            <option>Like New</option>
+            <option>Good</option>
+            <option>Fair</option>
+            <option>Poor</option>
+          </select>
+        </div>
+
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label" htmlFor="lend-from">Available From</label>
+            <input
+              type="date"
+              className="form-input"
+              value={lendForm.availableFrom}
+              id="lend-from"
+              name="available-from"
+              onChange={(e) => setLendForm(prev => ({ ...prev, availableFrom: e.target.value }))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="lend-until">Available Until</label>
+            <input
+              type="date"
+              className="form-input"
+              value={lendForm.availableUntil}
+              id="lend-until"
+              name="available-until"
+              onChange={(e) => setLendForm(prev => ({ ...prev, availableUntil: e.target.value }))}
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="btn btn-primary btn-full"
+        >
+          List Book for Lending
+        </button>
+      </form>
     </div>
-  );
+
+    {myListedBooks.length > 0 && (
+      <div className="card">
+        <h3 className="section-title">Your Listed Books</h3>
+        <div className="listed-books">
+          {myListedBooks.map((book) => (
+            <div key={book.id} className="listed-book-item">
+              <div className="listed-book-content">
+                <div>
+                  <h4 className="listed-book-title">{book.bookTitle}</h4>
+                  <p className="listed-book-detail">Condition: {book.condition}</p>
+                  <p className="listed-book-detail">Contact: {book.email}</p>
+                  {book.availableFrom && book.availableUntil && (
+                    <p className="listed-book-date">
+                      Available: {book.availableFrom} to {book.availableUntil}
+                    </p>
+                  )}
+                </div>
+                <span className="badge badge-success">Active</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+);
 
   const ProfileTab = () => (
     <div className="space-y-4">
