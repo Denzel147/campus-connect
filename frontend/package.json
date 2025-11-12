@@ -4,9 +4,10 @@
   "description": "Frontend for CampusConnect",
   "scripts": {
     "build": "node build.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "start": "node server.js"
   },
-  "devDependencies": {
+  "dependencies": {
     "@babel/core": "^7.23.0",
     "@babel/preset-react": "^7.23.0"
   }

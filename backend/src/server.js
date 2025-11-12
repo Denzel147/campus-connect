@@ -17,6 +17,7 @@ const itemRoutes = require('./routes/items');
 const transactionRoutes = require('./routes/transactions');
 const categoryRoutes = require('./routes/categories');
 const notificationRoutes = require('./routes/notifications');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -92,6 +93,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {

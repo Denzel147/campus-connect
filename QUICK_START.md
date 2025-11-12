@@ -15,7 +15,12 @@ The frontend works standalone and doesn't require the backend to function for ba
    cd backend
    ```
 
-2. **Create .env file** (copy from .env.example if needed):
+2. **Create .env file** (copy from .env.example):
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Then edit the `.env` file with your actual database credentials:
    ```env
    PORT=3001
    NODE_ENV=development
@@ -23,8 +28,8 @@ The frontend works standalone and doesn't require the backend to function for ba
    DB_PORT=5432
    DB_NAME=campus_connect_db
    DB_USER=postgres
-   DB_PASSWORD=Mbabazi31?
-   JWT_SECRET=your_secret_key_here
+   DB_PASSWORD=your_database_password_here
+   JWT_SECRET=your_secret_key_here_change_in_production
    ```
 
 3. **Ensure PostgreSQL is running** and database exists

@@ -1,12 +1,20 @@
-const { useState } = React;
+const { useState, useEffect, useCallback, useMemo } = React;
 
 // Icon components using Lucide
 const Icon = ({ name, size = 24, ...props }) => {
+  const iconRef = React.useRef(null);
+  
   React.useEffect(() => {
-    // Only (re)initialize icons when the icon name changes
-    try { lucide.createIcons(); } catch {}
+    // Only initialize icons for this specific element
+    if (iconRef.current && window.lucide) {
+      try { 
+        window.lucide.createIcons({ icons: window.lucide, nameAttr: 'data-lucide' });
+      } catch {}
+    }
   }, [name]);
+  
   return React.createElement('i', { 
+    ref: iconRef,
     'data-lucide': name, 
     width: size, 
     height: size,
@@ -167,82 +175,41 @@ const CampusConnect = () => {
 
   // Books the current user has listed
   const [myListedBooks, setMyListedBooks] = useState([]);
-
-  // Form state for lending a book - SIMPLIFIED
-  const [lendForm, setLendForm] = useState({
-    studentName: '',
-    email: '',
-    phoneNumber: '',
-    department: '',
-    bookTitle: '',
-    condition: 'Good',
-    availableFrom: '',
-    availableUntil: ''
+  
+  // Track all book requests (shared state that admin can see)
+  const [bookRequests, setBookRequests] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bookRequests');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
-  const [submitErrors, setSubmitErrors] = useState({});
-
-  // Validate form on submit only
-  const validateForm = () => {
-    const errors = {};
-    if (!lendForm.studentName.trim()) {
-      errors.studentName = 'Name is required.';
-    } else if (lendForm.studentName.trim().length < 2) {
-      errors.studentName = 'Name must be at least 2 characters.';
-    }
-    if (!lendForm.email.trim()) {
-      errors.email = 'Email is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lendForm.email.trim())) {
-      errors.email = 'Please enter a valid email address.';
-    }
-    if (!lendForm.bookTitle.trim()) {
-      errors.bookTitle = 'Book title is required.';
-    }
-    if (lendForm.phoneNumber.trim() && !/^\+?[0-9\s\-()]{7,15}$/.test(lendForm.phoneNumber.trim())) {
-      errors.phoneNumber = 'Please enter a valid phone number.';
-    }
-    return errors;
-  };
-
-  const handleLendSubmit = (e) => {
-    e.preventDefault();
-    const errors = validateForm();
-    
-    if (Object.keys(errors).length > 0) {
-      setSubmitErrors(errors);
-      showToast('Please fill in all required fields correctly', 'error');
-      return;
-    }
-
-    const newListing = {
+  
+  // Function to create a book request
+  const requestBook = (bookTitle) => {
+    const newRequest = {
       id: Date.now(),
-      ...lendForm,
-      listedDate: new Date().toISOString().split('T')[0]
+      bookTitle: bookTitle,
+      borrowerName: userName,
+      borrowerEmail: profile.email || `${userName.toLowerCase()}@university.edu`,
+      borrowerDepartment: profile.department || 'Not specified',
+      status: 'pending',
+      date: new Date().toISOString().split('T')[0],
+      requestedAt: new Date().toLocaleString()
     };
-
-    setMyListedBooks(prev => [...prev, newListing]);
     
-    const bookTitleTrimmed = lendForm.bookTitle.trim();
-    setAvailableBooks(prev => {
-      if (!prev.includes(bookTitleTrimmed)) {
-        return [...prev, bookTitleTrimmed];
-      }
-      return prev;
-    });
-
-    showToast('Book listed successfully!', 'success');
+    const updatedRequests = [...bookRequests, newRequest];
+    setBookRequests(updatedRequests);
     
-    // Reset form
-    setLendForm({
-      studentName: '',
-      email: '',
-      phoneNumber: '',
-      department: '',
-      bookTitle: '',
-      condition: 'Good',
-      availableFrom: '',
-      availableUntil: ''
-    });
-    setSubmitErrors({});
+    // Save to localStorage so admin can see it
+    try {
+      localStorage.setItem('bookRequests', JSON.stringify(updatedRequests));
+    } catch (e) {
+      console.error('Failed to save request:', e);
+    }
+    
+    showToast(`Book request sent for "${bookTitle}"`, 'success');
   };
 
   const filteredBooks = availableBooks.filter(book => book.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -286,7 +253,7 @@ const CampusConnect = () => {
                     <Icon name={'heart'} size={16} style={{ color: favorites.includes(book) ? 'crimson' : 'var(--muted)' }} />
                   </button>
                   <button
-                    onClick={() => { showToast(`Request sent for ${book}`, 'success'); saveSearch(searchQuery); }}
+                    onClick={() => { requestBook(book); saveSearch(searchQuery); }}
                     className="btn btn-primary btn-sm"
                     aria-label={`Request to borrow ${book}`}
                   >
@@ -346,194 +313,6 @@ const CampusConnect = () => {
     </div>
   );
 
-const LendBookTab = () => (
-  <div className="space-y-4">
-    <div className="card">
-      <h2 className="page-title">
-        <Icon name="plus" size={24} className="title-icon" />
-        Lend a Book
-      </h2>
-
-      <div className="card" style={{ marginBottom: '1rem' }}>
-        <h3 className="section-title">Smart Suggestions</h3>
-        <ul className="about-text" style={{ paddingLeft: '1rem' }}>
-          <li>Auto-suggest category based on course</li>
-          <li>Common for {selectedCourse}</li>
-          <li>Smart pricing: Similar items rent for $5–10/week</li>
-          <li>Timing tip: Set return before finals week</li>
-        </ul>
-      </div>
-
-      <form className="form-container" onSubmit={handleLendSubmit}>
-        <div className="form-grid">
-          <div className="form-group">
-            <label className="form-label" htmlFor="lend-name">
-              Your Name <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Enter your full name"
-              value={lendForm.studentName}
-              id="lend-name"
-              name="name"
-              autoComplete="name"
-              onChange={(e) => setLendForm(prev => ({ ...prev, studentName: e.target.value }))}
-            />
-            {submitErrors.studentName && (
-              <p className="form-error">{submitErrors.studentName}</p>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="lend-email">
-              Email <span className="required">*</span>
-            </label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="your.email@university.edu"
-              value={lendForm.email}
-              id="lend-email"
-              name="email"
-              autoComplete="email"
-              onChange={(e) => setLendForm(prev => ({ ...prev, email: e.target.value }))}
-            />
-            {submitErrors.email && (
-              <p className="form-error">{submitErrors.email}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="form-grid">
-          <div className="form-group">
-            <label className="form-label" htmlFor="lend-phone">Phone Number</label>
-            <input
-              type="tel"
-              className="form-input"
-              placeholder="+234 800 000 0000"
-              value={lendForm.phoneNumber}
-              id="lend-phone"
-              name="tel"
-              autoComplete="tel"
-              inputMode="tel"
-              onChange={(e) => setLendForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
-            />
-            {submitErrors.phoneNumber && (
-              <p className="form-error">{submitErrors.phoneNumber}</p>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="lend-dept">Department</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="e.g. Computer Science, Biology, Chemistry"
-              value={lendForm.department}
-              id="lend-dept"
-              name="organization-title"
-              autoComplete="off"
-              onChange={(e) => setLendForm(prev => ({ ...prev, department: e.target.value }))}
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="lend-title">
-            Book Title <span className="required">*</span>
-          </label>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Enter the book title"
-            value={lendForm.bookTitle}
-            id="lend-title"
-            name="book-title"
-            autoComplete="off"
-            onChange={(e) => setLendForm(prev => ({ ...prev, bookTitle: e.target.value }))}
-          />
-          {submitErrors.bookTitle && (
-            <p className="form-error">{submitErrors.bookTitle}</p>
-          )}
-        </div>
-
-        <div className="form-group">
-          <label className="form-label" htmlFor="lend-condition">Book Condition</label>
-          <select
-            className="form-input"
-            value={lendForm.condition}
-            id="lend-condition"
-            onChange={(e) => setLendForm(prev => ({ ...prev, condition: e.target.value }))}
-          >
-            <option>Like New</option>
-            <option>Good</option>
-            <option>Fair</option>
-            <option>Poor</option>
-          </select>
-        </div>
-
-        <div className="form-grid">
-          <div className="form-group">
-            <label className="form-label" htmlFor="lend-from">Available From</label>
-            <input
-              type="date"
-              className="form-input"
-              value={lendForm.availableFrom}
-              id="lend-from"
-              name="available-from"
-              onChange={(e) => setLendForm(prev => ({ ...prev, availableFrom: e.target.value }))}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="lend-until">Available Until</label>
-            <input
-              type="date"
-              className="form-input"
-              value={lendForm.availableUntil}
-              id="lend-until"
-              name="available-until"
-              onChange={(e) => setLendForm(prev => ({ ...prev, availableUntil: e.target.value }))}
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className="btn btn-primary btn-full"
-        >
-          List Book for Lending
-        </button>
-      </form>
-    </div>
-
-    {myListedBooks.length > 0 && (
-      <div className="card">
-        <h3 className="section-title">Your Listed Books</h3>
-        <div className="listed-books">
-          {myListedBooks.map((book) => (
-            <div key={book.id} className="listed-book-item">
-              <div className="listed-book-content">
-                <div>
-                  <h4 className="listed-book-title">{book.bookTitle}</h4>
-                  <p className="listed-book-detail">Condition: {book.condition}</p>
-                  <p className="listed-book-detail">Contact: {book.email}</p>
-                  {book.availableFrom && book.availableUntil && (
-                    <p className="listed-book-date">
-                      Available: {book.availableFrom} to {book.availableUntil}
-                    </p>
-                  )}
-                </div>
-                <span className="badge badge-success">Active</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
-);
 
   const ProfileTab = () => (
     <div className="space-y-4">
@@ -819,6 +598,529 @@ const LendBookTab = () => (
     </div>
   );
 
+  const LendBookPage = () => {
+    return React.createElement('div', { className: 'space-y-4' },
+      React.createElement('div', { className: 'card' },
+        React.createElement('h2', { className: 'page-title' },
+          React.createElement(Icon, { name: 'plus', size: 24, className: 'title-icon' }),
+          ' Lend a Book'
+        ),
+        React.createElement('p', { style: { marginBottom: '20px', color: '#666' } },
+          'List your book for other students to borrow'
+        ),
+        React.createElement('form', {
+          id: 'lendBookForm',
+          onSubmit: (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const newListing = {
+              id: Date.now(),
+              title: form.elements['bookTitle'].value,
+              author: form.elements['author'].value || 'Unknown',
+              condition: form.elements['condition'].value,
+              description: form.elements['description'].value,
+              deposit_amount: parseFloat(form.elements['deposit'].value) || 0,
+              lending_duration_days: parseInt(form.elements['duration'].value) || 7,
+              lenderName: userName,
+              lenderEmail: profile.email || `${userName.toLowerCase()}@university.edu`,
+              lenderDepartment: profile.department || 'Not specified',
+              status: 'pending',
+              date: new Date().toISOString().split('T')[0],
+              listedAt: new Date().toLocaleString(),
+              type: 'lend'
+            };
+            
+            // Save to localStorage for admin to see
+            try {
+              const existingListings = localStorage.getItem('bookListings');
+              const listings = existingListings ? JSON.parse(existingListings) : [];
+              listings.push(newListing);
+              localStorage.setItem('bookListings', JSON.stringify(listings));
+              
+              // Also add to myListedBooks
+              setMyListedBooks(prev => [...prev, newListing]);
+            } catch (e) {
+              console.error('Failed to save listing:', e);
+            }
+            
+            showToast('Book listed successfully! Admin can now see it.', 'success');
+            form.reset();
+          }
+        },
+          React.createElement('div', { className: 'form-grid' },
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'bookTitle' },
+                'Book Title ',
+                React.createElement('span', { className: 'required' }, '*')
+              ),
+              React.createElement('input', {
+                type: 'text',
+                className: 'form-input',
+                id: 'bookTitle',
+                name: 'bookTitle',
+                placeholder: 'Enter book title',
+                required: true
+              })
+            ),
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'author' },
+                'Author'
+              ),
+              React.createElement('input', {
+                type: 'text',
+                className: 'form-input',
+                id: 'author',
+                name: 'author',
+                placeholder: 'Enter author name'
+              })
+            )
+          ),
+          React.createElement('div', { className: 'form-group' },
+            React.createElement('label', { className: 'form-label', htmlFor: 'condition' },
+              'Condition'
+            ),
+            React.createElement('select', {
+              className: 'form-input',
+              id: 'condition',
+              name: 'condition'
+            },
+              React.createElement('option', { value: 'Excellent' }, 'Excellent - Like New'),
+              React.createElement('option', { value: 'Good' }, 'Good - Minor Wear'),
+              React.createElement('option', { value: 'Fair' }, 'Fair - Visible Wear'),
+              React.createElement('option', { value: 'Poor' }, 'Poor - Heavy Wear')
+            )
+          ),
+          React.createElement('div', { className: 'form-group' },
+            React.createElement('label', { className: 'form-label', htmlFor: 'description' },
+              'Description'
+            ),
+            React.createElement('textarea', {
+              className: 'form-input',
+              id: 'description',
+              name: 'description',
+              rows: 4,
+              placeholder: 'Describe your book, any highlights, notes, etc.'
+            })
+          ),
+          React.createElement('div', { className: 'form-grid' },
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'deposit' },
+                'Deposit Amount ($)'
+              ),
+              React.createElement('input', {
+                type: 'number',
+                className: 'form-input',
+                id: 'deposit',
+                name: 'deposit',
+                min: '0',
+                step: '0.01',
+                defaultValue: '0',
+                placeholder: '0.00'
+              })
+            ),
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'duration' },
+                'Lending Duration (days)'
+              ),
+              React.createElement('input', {
+                type: 'number',
+                className: 'form-input',
+                id: 'duration',
+                name: 'duration',
+                min: '1',
+                defaultValue: '7',
+                placeholder: '7'
+              })
+            )
+          ),
+          React.createElement('button', {
+            type: 'submit',
+            className: 'btn btn-primary',
+            style: { width: '100%', marginTop: '20px' }
+          }, '📚 List Book for Lending')
+        )
+      )
+    );
+  };
+
+  const AdminDashboard = () => {
+    const [stats, setStats] = React.useState({ transactions: {}, items: {}, users: {} });
+    const [requests, setRequests] = React.useState([]);
+    const [listings, setListings] = React.useState([]);
+    const [allItems, setAllItems] = React.useState([]);
+    const [statusFilter, setStatusFilter] = React.useState('all');
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+      // Load real book requests and listings from localStorage
+      try {
+        // Load book requests (borrow requests)
+        const savedRequests = localStorage.getItem('bookRequests');
+        const allRequests = savedRequests ? JSON.parse(savedRequests) : [];
+        
+        // Load book listings (lend listings)
+        const savedListings = localStorage.getItem('bookListings');
+        const allListings = savedListings ? JSON.parse(savedListings) : [];
+        
+        setRequests(allRequests);
+        setListings(allListings);
+        
+        // Combine both for display
+        const combined = [
+          ...allRequests.map(r => ({ ...r, type: 'request' })),
+          ...allListings.map(l => ({ ...l, type: 'listing' }))
+        ];
+        setAllItems(combined);
+        
+        // Calculate real statistics
+        const allTransactions = combined;
+        const pendingCount = allTransactions.filter(r => r.status === 'pending').length;
+        const approvedCount = allTransactions.filter(r => r.status === 'approved').length;
+        const cancelledCount = allTransactions.filter(r => r.status === 'cancelled').length;
+        const activeCount = allTransactions.filter(r => r.status === 'active').length;
+        const completedCount = allTransactions.filter(r => r.status === 'completed').length;
+        
+        setStats({
+          transactions: { 
+            total: allTransactions.length, 
+            pending: pendingCount,
+            approved: approvedCount,
+            cancelled: cancelledCount,
+            active: activeCount, 
+            completed: completedCount, 
+            overdue: 0 
+          },
+          items: { 
+            total: allListings.length, 
+            available: allListings.filter(l => l.status === 'approved').length, 
+            borrowed: activeCount, 
+            reserved: 0 
+          },
+          users: { total: 1, active: 1, verified: 1 }
+        });
+      } catch (e) {
+        console.error('Failed to load data:', e);
+        setRequests([]);
+        setListings([]);
+        setAllItems([]);
+      }
+      
+      setLoading(false);
+    }, []);
+    
+    // Filter items by status
+    const filteredItems = statusFilter === 'all' 
+      ? allItems 
+      : allItems.filter(item => item.status === statusFilter);
+
+    return React.createElement('div', { className: 'space-y-4' },
+      React.createElement('div', { className: 'card' },
+        React.createElement('h2', { className: 'page-title' },
+          React.createElement(Icon, { name: 'shield', size: 24, className: 'title-icon' }),
+          ' Admin Dashboard'
+        ),
+        
+        // Statistics Cards
+        React.createElement('div', { 
+          style: { 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+            gap: '20px', 
+            marginTop: '20px' 
+          } 
+        },
+          // Transactions Stats
+          React.createElement('div', { 
+            style: { 
+              padding: '20px', 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+              borderRadius: '8px', 
+              color: 'white' 
+            } 
+          },
+            React.createElement('div', { style: { fontSize: '14px', opacity: 0.9 } }, 'Total Transactions'),
+            React.createElement('div', { style: { fontSize: '32px', fontWeight: 'bold', marginTop: '8px' } }, stats.transactions.total || 0),
+            React.createElement('div', { style: { marginTop: '12px', fontSize: '12px' } },
+              `Pending: ${stats.transactions.pending || 0} | Active: ${stats.transactions.active || 0}`
+            )
+          ),
+          
+          // Items Stats
+          React.createElement('div', { 
+            style: { 
+              padding: '20px', 
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', 
+              borderRadius: '8px', 
+              color: 'white' 
+            } 
+          },
+            React.createElement('div', { style: { fontSize: '14px', opacity: 0.9 } }, 'Total Books'),
+            React.createElement('div', { style: { fontSize: '32px', fontWeight: 'bold', marginTop: '8px' } }, stats.items.total || 0),
+            React.createElement('div', { style: { marginTop: '12px', fontSize: '12px' } },
+              `Available: ${stats.items.available || 0} | Borrowed: ${stats.items.borrowed || 0}`
+            )
+          ),
+          
+          // Users Stats
+          React.createElement('div', { 
+            style: { 
+              padding: '20px', 
+              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', 
+              borderRadius: '8px', 
+              color: 'white' 
+            } 
+          },
+            React.createElement('div', { style: { fontSize: '14px', opacity: 0.9 } }, 'Total Users'),
+            React.createElement('div', { style: { fontSize: '32px', fontWeight: 'bold', marginTop: '8px' } }, stats.users.total || 0),
+            React.createElement('div', { style: { marginTop: '12px', fontSize: '12px' } },
+              `Active: ${stats.users.active || 0} | Verified: ${stats.users.verified || 0}`
+            )
+          )
+        ),
+        
+        // Filter Buttons
+        React.createElement('div', { style: { marginTop: '30px' } },
+          React.createElement('div', { 
+            style: { 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '15px',
+              flexWrap: 'wrap',
+              gap: '10px'
+            } 
+          },
+            React.createElement('h3', { style: { fontSize: '18px', fontWeight: '600', margin: 0 } }, 
+              `📚 All Activities (${filteredItems.length})`
+            ),
+            React.createElement('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } },
+              React.createElement('button', {
+                onClick: () => setStatusFilter('all'),
+                className: 'btn btn-sm',
+                style: {
+                  background: statusFilter === 'all' ? '#667eea' : '#f8f9fa',
+                  color: statusFilter === 'all' ? 'white' : '#333',
+                  border: 'none',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: '500'
+                }
+              }, 'All'),
+              React.createElement('button', {
+                onClick: () => setStatusFilter('pending'),
+                className: 'btn btn-sm',
+                style: {
+                  background: statusFilter === 'pending' ? '#ffc107' : '#f8f9fa',
+                  color: statusFilter === 'pending' ? 'white' : '#333',
+                  border: 'none',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: '500'
+                }
+              }, `Pending (${stats.transactions.pending || 0})`),
+              React.createElement('button', {
+                onClick: () => setStatusFilter('approved'),
+                className: 'btn btn-sm',
+                style: {
+                  background: statusFilter === 'approved' ? '#28a745' : '#f8f9fa',
+                  color: statusFilter === 'approved' ? 'white' : '#333',
+                  border: 'none',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: '500'
+                }
+              }, `Approved (${stats.transactions.approved || 0})`),
+              React.createElement('button', {
+                onClick: () => setStatusFilter('cancelled'),
+                className: 'btn btn-sm',
+                style: {
+                  background: statusFilter === 'cancelled' ? '#dc3545' : '#f8f9fa',
+                  color: statusFilter === 'cancelled' ? 'white' : '#333',
+                  border: 'none',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  fontWeight: '500'
+                }
+              }, `Cancelled (${stats.transactions.cancelled || 0})`)
+            )
+          )
+        ),
+        
+        // Activities Table
+        React.createElement('div', { style: { marginTop: '15px' } },
+          
+          filteredItems.length === 0 ? 
+            React.createElement('div', { 
+              style: { 
+                padding: '40px', 
+                textAlign: 'center', 
+                color: '#999',
+                background: '#f8f9fa',
+                borderRadius: '8px'
+              } 
+            },
+              React.createElement('p', { style: { fontSize: '16px', marginBottom: '8px' } }, '📭 No book requests yet'),
+              React.createElement('p', { style: { fontSize: '14px' } }, 'When users request books, they will appear here.')
+            )
+          :
+          React.createElement('div', { style: { overflowX: 'auto' } },
+            React.createElement('table', { 
+              style: { 
+                width: '100%', 
+                borderCollapse: 'collapse',
+                fontSize: '14px'
+              } 
+            },
+              React.createElement('thead', {},
+                React.createElement('tr', { style: { borderBottom: '2px solid #e0e0e0' } },
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'Type'),
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'Book Title'),
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'User'),
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'Email'),
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'Status'),
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'Date'),
+                  React.createElement('th', { style: { padding: '12px', textAlign: 'left' } }, 'Actions')
+                )
+              ),
+              React.createElement('tbody', {},
+                filteredItems.map(item =>
+                  React.createElement('tr', { 
+                    key: item.id,
+                    style: { borderBottom: '1px solid #f0f0f0' }
+                  },
+                    React.createElement('td', { style: { padding: '12px' } },
+                      React.createElement('span', {
+                        style: {
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          background: item.type === 'request' ? '#e3f2fd' : '#fff3e0',
+                          color: item.type === 'request' ? '#1976d2' : '#f57c00'
+                        }
+                      }, item.type === 'request' ? 'REQUEST' : 'LEND')
+                    ),
+                    React.createElement('td', { style: { padding: '12px', fontWeight: '500' } }, item.bookTitle || item.title),
+                    React.createElement('td', { style: { padding: '12px' } }, item.borrowerName || item.lenderName),
+                    React.createElement('td', { style: { padding: '12px', fontSize: '12px', color: '#666' } }, item.borrowerEmail || item.lenderEmail || 'N/A'),
+                    React.createElement('td', { style: { padding: '12px' } },
+                      React.createElement('span', {
+                        style: {
+                          padding: '4px 12px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          background: item.status === 'pending' ? '#fff3cd' : 
+                                     item.status === 'approved' ? '#d4edda' :
+                                     item.status === 'cancelled' ? '#f8d7da' :
+                                     item.status === 'active' ? '#d1ecf1' : '#e2e3e5',
+                          color: item.status === 'pending' ? '#856404' : 
+                                item.status === 'approved' ? '#155724' :
+                                item.status === 'cancelled' ? '#721c24' :
+                                item.status === 'active' ? '#0c5460' : '#383d41'
+                        }
+                      }, item.status.charAt(0).toUpperCase() + item.status.slice(1))
+                    ),
+                    React.createElement('td', { style: { padding: '12px', fontSize: '13px' } }, item.date),
+                    React.createElement('td', { style: { padding: '12px' } },
+                      React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                        item.status === 'pending' && React.createElement('button', {
+                          onClick: () => {
+                            // Update status to approved
+                            try {
+                              if (item.type === 'request') {
+                                const savedRequests = localStorage.getItem('bookRequests');
+                                const allRequests = savedRequests ? JSON.parse(savedRequests) : [];
+                                const updated = allRequests.map(r => 
+                                  r.id === item.id ? { ...r, status: 'approved' } : r
+                                );
+                                localStorage.setItem('bookRequests', JSON.stringify(updated));
+                              } else {
+                                const savedListings = localStorage.getItem('bookListings');
+                                const allListings = savedListings ? JSON.parse(savedListings) : [];
+                                const updated = allListings.map(l => 
+                                  l.id === item.id ? { ...l, status: 'approved' } : l
+                                );
+                                localStorage.setItem('bookListings', JSON.stringify(updated));
+                              }
+                              showToast('Status updated to Approved!', 'success');
+                              window.location.reload();
+                            } catch (e) {
+                              showToast('Failed to update status', 'error');
+                            }
+                          },
+                          className: 'btn btn-sm',
+                          style: {
+                            background: '#28a745',
+                            color: 'white',
+                            border: 'none',
+                            padding: '4px 12px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }
+                        }, '✓ Approve'),
+                        item.status === 'pending' && React.createElement('button', {
+                          onClick: () => {
+                            // Update status to cancelled
+                            try {
+                              if (item.type === 'request') {
+                                const savedRequests = localStorage.getItem('bookRequests');
+                                const allRequests = savedRequests ? JSON.parse(savedRequests) : [];
+                                const updated = allRequests.map(r => 
+                                  r.id === item.id ? { ...r, status: 'cancelled' } : r
+                                );
+                                localStorage.setItem('bookRequests', JSON.stringify(updated));
+                              } else {
+                                const savedListings = localStorage.getItem('bookListings');
+                                const allListings = savedListings ? JSON.parse(savedListings) : [];
+                                const updated = allListings.map(l => 
+                                  l.id === item.id ? { ...l, status: 'cancelled' } : l
+                                );
+                                localStorage.setItem('bookListings', JSON.stringify(updated));
+                              }
+                              showToast('Status updated to Cancelled', 'info');
+                              window.location.reload();
+                            } catch (e) {
+                              showToast('Failed to update status', 'error');
+                            }
+                          },
+                          className: 'btn btn-sm',
+                          style: {
+                            background: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            padding: '4px 12px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }
+                        }, '✗ Cancel')
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        ),
+        
+        // Info Box
+        React.createElement('div', { 
+          style: { 
+            marginTop: '20px', 
+            padding: '15px', 
+            background: '#f8f9fa', 
+            borderRadius: '6px',
+            borderLeft: '4px solid #667eea'
+          } 
+        },
+          React.createElement('p', { style: { fontSize: '14px', color: '#666' } },
+            '💡 This dashboard shows real-time statistics. Click on any book title to see all users who requested that specific book.'
+          )
+        )
+      )
+    );
+  };
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -900,8 +1202,9 @@ const LendBookTab = () => (
           </div>
         )}
         {currentTab === 'courses' && <CoursesTab />}
-        {currentTab === 'lend' && <LendBookTab />}
+        {currentTab === 'lend' && React.createElement(LendBookPage)}
         {currentTab === 'profile' && <ProfileTab />}
+        {currentTab === 'admin' && React.createElement(AdminDashboard)}
       </main>
 
       {/* Bottom Navigation */}
@@ -937,7 +1240,7 @@ const LendBookTab = () => (
             aria-current={currentTab === 'lend' ? 'page' : undefined}
           >
             <Icon name="plus" size={24} />
-            <span className="nav-label">Lend a Book</span>
+            <span className="nav-label">Lend Book</span>
           </button>
           <button
             onClick={() => setCurrentTab('profile')}
@@ -946,6 +1249,14 @@ const LendBookTab = () => (
           >
             <Icon name="user" size={24} />
             <span className="nav-label">Profile</span>
+          </button>
+          <button
+            onClick={() => setCurrentTab('admin')}
+            className={`nav-item ${currentTab === 'admin' ? 'nav-item-active' : ''}`}
+            aria-current={currentTab === 'admin' ? 'page' : undefined}
+          >
+            <Icon name="shield" size={24} />
+            <span className="nav-label">Admin</span>
           </button>
         </div>
       </nav>

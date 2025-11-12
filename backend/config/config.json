@@ -1,23 +1,27 @@
 {
   "development": {
     "username": "postgres",
-    "password": "Mbabazi31?",
+    "password": null,
     "database": "campus_connect_db",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "use_env_variable": "DATABASE_URL"
   },
   "test": {
     "username": "postgres",
-    "password": "Mbabazi31?",
-    "database": "campus_connect_db",
+    "password": null,
+    "database": "campus_connect_test_db",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
   "production": {
-    "username": "postgres",
-    "password": "Mbabazi31?",
-    "database": "campus_connect_db",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   }
 }
