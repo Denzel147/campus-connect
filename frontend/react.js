@@ -159,22 +159,32 @@ const CampusConnect = () => {
 
   // removed duplicate favorites persistence effect
 
-  // Sample data - just book titles available for borrowing
+  // Enhanced sample data with more details
   const [availableBooks, setAvailableBooks] = useState([
-    'Introduction to Algorithms',
-    'Organic Chemistry',
-    'Calculus: Early Transcendentals',
-    'Principles of Economics',
-    'Data Structures and Algorithms',
-    'Physics for Scientists and Engineers',
-    'Biology: The Unity and Diversity of Life',
-    'Microeconomics',
-    'Linear Algebra and Its Applications',
-    'Modern Operating Systems'
+    { title: 'Introduction to Algorithms', condition: 'Excellent', price: 25, date: '2025-11-01', author: 'Cormen et al.', category: 'Computer Science' },
+    { title: 'Organic Chemistry', condition: 'Good', price: 30, date: '2025-11-05', author: 'Wade', category: 'Chemistry' },
+    { title: 'Calculus: Early Transcendentals', condition: 'Fair', price: 20, date: '2025-11-10', author: 'Stewart', category: 'Mathematics' },
+    { title: 'Principles of Economics', condition: 'Excellent', price: 35, date: '2025-11-08', author: 'Mankiw', category: 'Economics' },
+    { title: 'Data Structures and Algorithms', condition: 'Good', price: 28, date: '2025-11-03', author: 'Goodrich', category: 'Computer Science' },
+    { title: 'Physics for Scientists and Engineers', condition: 'Excellent', price: 40, date: '2025-11-12', author: 'Serway', category: 'Physics' },
+    { title: 'Biology: The Unity and Diversity of Life', condition: 'Fair', price: 22, date: '2025-11-06', author: 'Starr', category: 'Biology' },
+    { title: 'Microeconomics', condition: 'Good', price: 26, date: '2025-11-09', author: 'Pindyck', category: 'Economics' },
+    { title: 'Linear Algebra and Its Applications', condition: 'Excellent', price: 32, date: '2025-11-04', author: 'Lay', category: 'Mathematics' },
+    { title: 'Modern Operating Systems', condition: 'Good', price: 29, date: '2025-11-11', author: 'Tanenbaum', category: 'Computer Science' }
   ]);
 
   // Books the current user has listed
   const [myListedBooks, setMyListedBooks] = useState([]);
+  
+  // Enhanced filters and sorting
+  const [sortBy, setSortBy] = useState('title'); // title, date, condition
+  const [filterCondition, setFilterCondition] = useState('all');
+  const [priceRange, setPriceRange] = useState([0, 100]);
+  const [viewMode, setViewMode] = useState('grid'); // grid or list
+  
+  // Form validation states
+  const [formErrors, setFormErrors] = useState({});
+  const [formTouched, setFormTouched] = useState({});
   
   // Track all book requests (shared state that admin can see)
   const [bookRequests, setBookRequests] = useState(() => {
@@ -212,50 +222,168 @@ const CampusConnect = () => {
     showToast(`Book request sent for "${bookTitle}"`, 'success');
   };
 
-  const filteredBooks = availableBooks.filter(book => book.toLowerCase().includes(searchQuery.toLowerCase()));
-  const displayBooks = filteredBooks.filter(b => !savedOnly || favorites.includes(b));
+  // Enhanced filtering and sorting logic
+  const filteredBooks = useMemo(() => {
+    let books = availableBooks.filter(book => 
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Filter by condition
+    if (filterCondition !== 'all') {
+      books = books.filter(book => book.condition === filterCondition);
+    }
+    
+    // Filter by price range
+    books = books.filter(book => book.price >= priceRange[0] && book.price <= priceRange[1]);
+    
+    // Filter by saved only
+    if (savedOnly) {
+      books = books.filter(book => favorites.includes(book.title));
+    }
+    
+    // Sort books
+    books.sort((a, b) => {
+      switch(sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'date-new':
+          return new Date(b.date) - new Date(a.date);
+        case 'date-old':
+          return new Date(a.date) - new Date(b.date);
+        case 'condition':
+          const conditionOrder = { 'Excellent': 1, 'Good': 2, 'Fair': 3, 'Poor': 4 };
+          return conditionOrder[a.condition] - conditionOrder[b.condition];
+        case 'title':
+        default:
+          return a.title.localeCompare(b.title);
+      }
+    });
+    
+    return books;
+  }, [availableBooks, searchQuery, filterCondition, priceRange, savedOnly, favorites, sortBy]);
+  
+  const displayBooks = filteredBooks;
 
   const BrowseTab = () => (
     <div className="space-y-4">
       <div className="card">
         <h3 className="section-title">Available Books to Borrow</h3>
+        
+        {/* Enhanced Filters and Search */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <select 
+              className="form-input" 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <option value="title">Sort: A-Z</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="date-new">Newest First</option>
+              <option value="date-old">Oldest First</option>
+              <option value="condition">Best Condition</option>
+            </select>
+            
+            <select 
+              className="form-input" 
+              value={filterCondition} 
+              onChange={(e) => setFilterCondition(e.target.value)}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <option value="all">All Conditions</option>
+              <option value="Excellent">⭐ Excellent</option>
+              <option value="Good">✓ Good</option>
+              <option value="Fair">○ Fair</option>
+              <option value="Poor">△ Poor</option>
+            </select>
+            
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                className={`btn btn-sm ${viewMode === 'grid' ? 'btn-primary' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid View"
+              >
+                <Icon name="grid" size={16} />
+              </button>
+              <button
+                className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List View"
+              >
+                <Icon name="list" size={16} />
+              </button>
+            </div>
+          </div>
+          
+          <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>
+            Showing {displayBooks.length} of {availableBooks.length} books
+          </div>
+        </div>
+        
         {loading ? (
-          <div className="book-list" aria-hidden="true">
+          <div className={viewMode === 'grid' ? 'book-grid' : 'book-list'} aria-hidden="true">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="book-item">
-                <div className="book-item-content">
-                  <div className="skeleton-avatar" />
-                  <div style={{ width: '200px' }} className="skeleton skeleton-line" />
-                </div>
+              <div key={i} className="book-card">
+                <div className="skeleton-avatar" />
+                <div style={{ width: '80%' }} className="skeleton skeleton-line" />
                 <div className="skeleton skeleton-btn" />
               </div>
             ))}
           </div>
         ) : filteredBooks.length === 0 ? (
-          <p className="empty-state">No books found matching your search.</p>
+          <div className="empty-state">
+            <Icon name="search-x" size={48} style={{ color: 'var(--muted)', marginBottom: '1rem' }} />
+            <p style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.5rem' }}>No books found</p>
+            <p style={{ color: 'var(--muted)' }}>Try adjusting your filters or search query</p>
+          </div>
         ) : (
-          <div className="book-list" role="list" aria-label="Available books">
+          <div className={viewMode === 'grid' ? 'book-grid' : 'book-list'} role="list" aria-label="Available books">
             {displayBooks.map((book, index) => (
-              <div key={index} className="book-item" role="listitem">
-                <div className="book-item-content">
-                  <Icon name="book-open" size={20} className="book-icon" />
-                  <span className="book-title">{book}</span>
+              <div key={index} className={viewMode === 'grid' ? 'book-card' : 'book-item-enhanced'} role="listitem">
+                <div className="book-condition-badge" data-condition={book.condition.toLowerCase()}>
+                  {book.condition === 'Excellent' && '⭐'}
+                  {book.condition === 'Good' && '✓'}
+                  {book.condition === 'Fair' && '○'}
+                  {book.condition === 'Poor' && '△'}
+                  {' '}{book.condition}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="book-card-content">
+                  <Icon name="book-open" size={24} className="book-icon" />
+                  <div style={{ flex: 1 }}>
+                    <h4 className="book-card-title">{book.title}</h4>
+                    <p className="book-card-author">by {book.author}</p>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="badge" style={{ fontSize: '0.75rem' }}>{book.category}</span>
+                      <span className="badge" style={{ fontSize: '0.75rem', background: 'var(--success-bg)' }}>
+                        ${book.price}/week
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="book-card-actions">
                   <button
-                    onClick={() => { const wasSaved = favorites.includes(book); toggleFavorite(book); showToast(wasSaved ? 'Removed from saved' : 'Saved to favorites', 'info'); }}
+                    onClick={() => { 
+                      const wasSaved = favorites.includes(book.title); 
+                      toggleFavorite(book.title); 
+                      showToast(wasSaved ? 'Removed from saved' : 'Saved to favorites', 'info'); 
+                    }}
                     className="btn btn-sm"
-                    aria-pressed={favorites.includes(book)}
-                    aria-label={`${favorites.includes(book) ? 'Remove from' : 'Add to'} favorites: ${book}`}
-                    title={favorites.includes(book) ? 'Saved' : 'Save'}
+                    aria-pressed={favorites.includes(book.title)}
+                    title={favorites.includes(book.title) ? 'Saved' : 'Save'}
                     style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
                   >
-                    <Icon name={'heart'} size={16} style={{ color: favorites.includes(book) ? 'crimson' : 'var(--muted)' }} />
+                    <Icon name={'heart'} size={16} style={{ color: favorites.includes(book.title) ? 'crimson' : 'var(--muted)' }} />
                   </button>
                   <button
-                    onClick={() => { requestBook(book); saveSearch(searchQuery); }}
+                    onClick={() => { requestBook(book.title); saveSearch(searchQuery); }}
                     className="btn btn-primary btn-sm"
-                    aria-label={`Request to borrow ${book}`}
+                    style={{ flex: 1 }}
                   >
                     Request
                   </button>
@@ -598,54 +726,130 @@ const CampusConnect = () => {
     </div>
   );
 
+  // Form validation function
+  const validateForm = (formData) => {
+    const errors = {};
+    
+    if (!formData.bookTitle || formData.bookTitle.trim().length < 3) {
+      errors.bookTitle = 'Book title must be at least 3 characters';
+    }
+    
+    if (formData.deposit && (isNaN(formData.deposit) || formData.deposit < 0)) {
+      errors.deposit = 'Deposit must be a positive number';
+    }
+    
+    if (formData.duration && (isNaN(formData.duration) || formData.duration < 1 || formData.duration > 365)) {
+      errors.duration = 'Duration must be between 1 and 365 days';
+    }
+    
+    if (formData.availableFrom && formData.availableTo) {
+      const from = new Date(formData.availableFrom);
+      const to = new Date(formData.availableTo);
+      if (from > to) {
+        errors.availableTo = 'End date must be after start date';
+      }
+    }
+    
+    return errors;
+  };
+
   const LendBookPage = () => {
+    const [localFormData, setLocalFormData] = React.useState({
+      bookTitle: '',
+      author: '',
+      condition: 'Excellent',
+      description: '',
+      deposit: '0',
+      duration: '7',
+      availableFrom: '',
+      availableTo: '',
+      category: 'Computer Science'
+    });
+    
+    const handleInputChange = (field, value) => {
+      setLocalFormData(prev => ({ ...prev, [field]: value }));
+      setFormTouched(prev => ({ ...prev, [field]: true }));
+      
+      // Real-time validation
+      const updatedData = { ...localFormData, [field]: value };
+      const errors = validateForm(updatedData);
+      setFormErrors(errors);
+    };
+    
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      
+      // Final validation
+      const errors = validateForm(localFormData);
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        showToast('Please fix form errors', 'error');
+        return;
+      }
+      
+      const newListing = {
+        id: Date.now(),
+        title: localFormData.bookTitle,
+        author: localFormData.author || 'Unknown',
+        condition: localFormData.condition,
+        description: localFormData.description,
+        category: localFormData.category,
+        deposit_amount: parseFloat(localFormData.deposit) || 0,
+        lending_duration_days: parseInt(localFormData.duration) || 7,
+        available_from: localFormData.availableFrom,
+        available_to: localFormData.availableTo,
+        lenderName: userName,
+        lenderEmail: profile.email || `${userName.toLowerCase()}@university.edu`,
+        lenderDepartment: profile.department || 'Not specified',
+        status: 'available',
+        date: new Date().toISOString().split('T')[0],
+        listedAt: new Date().toLocaleString(),
+        type: 'lend'
+      };
+      
+      // Save to localStorage for admin to see
+      try {
+        const existingListings = localStorage.getItem('bookListings');
+        const listings = existingListings ? JSON.parse(existingListings) : [];
+        listings.push(newListing);
+        localStorage.setItem('bookListings', JSON.stringify(listings));
+        
+        // Also add to myListedBooks
+        setMyListedBooks(prev => [...prev, newListing]);
+      } catch (e) {
+        console.error('Failed to save listing:', e);
+      }
+      
+      showToast('📚 Book listed successfully! Admin can now see it.', 'success');
+      
+      // Reset form
+      setLocalFormData({
+        bookTitle: '',
+        author: '',
+        condition: 'Excellent',
+        description: '',
+        deposit: '0',
+        duration: '7',
+        availableFrom: '',
+        availableTo: '',
+        category: 'Computer Science'
+      });
+      setFormErrors({});
+      setFormTouched({});
+    };
+    
     return React.createElement('div', { className: 'space-y-4' },
       React.createElement('div', { className: 'card' },
         React.createElement('h2', { className: 'page-title' },
           React.createElement(Icon, { name: 'plus', size: 24, className: 'title-icon' }),
           ' Lend a Book'
         ),
-        React.createElement('p', { style: { marginBottom: '20px', color: '#666' } },
+        React.createElement('p', { style: { marginBottom: '20px', color: 'var(--muted)' } },
           'List your book for other students to borrow'
         ),
         React.createElement('form', {
           id: 'lendBookForm',
-          onSubmit: (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const newListing = {
-              id: Date.now(),
-              title: form.elements['bookTitle'].value,
-              author: form.elements['author'].value || 'Unknown',
-              condition: form.elements['condition'].value,
-              description: form.elements['description'].value,
-              deposit_amount: parseFloat(form.elements['deposit'].value) || 0,
-              lending_duration_days: parseInt(form.elements['duration'].value) || 7,
-              lenderName: userName,
-              lenderEmail: profile.email || `${userName.toLowerCase()}@university.edu`,
-              lenderDepartment: profile.department || 'Not specified',
-              status: 'pending',
-              date: new Date().toISOString().split('T')[0],
-              listedAt: new Date().toLocaleString(),
-              type: 'lend'
-            };
-            
-            // Save to localStorage for admin to see
-            try {
-              const existingListings = localStorage.getItem('bookListings');
-              const listings = existingListings ? JSON.parse(existingListings) : [];
-              listings.push(newListing);
-              localStorage.setItem('bookListings', JSON.stringify(listings));
-              
-              // Also add to myListedBooks
-              setMyListedBooks(prev => [...prev, newListing]);
-            } catch (e) {
-              console.error('Failed to save listing:', e);
-            }
-            
-            showToast('Book listed successfully! Admin can now see it.', 'success');
-            form.reset();
-          }
+          onSubmit: handleSubmit
         },
           React.createElement('div', { className: 'form-grid' },
             React.createElement('div', { className: 'form-group' },
@@ -655,12 +859,19 @@ const CampusConnect = () => {
               ),
               React.createElement('input', {
                 type: 'text',
-                className: 'form-input',
+                className: `form-input ${formErrors.bookTitle && formTouched.bookTitle ? 'input-error' : ''}`,
                 id: 'bookTitle',
                 name: 'bookTitle',
                 placeholder: 'Enter book title',
+                value: localFormData.bookTitle,
+                onChange: (e) => handleInputChange('bookTitle', e.target.value),
                 required: true
-              })
+              }),
+              formErrors.bookTitle && formTouched.bookTitle && 
+                React.createElement('span', { className: 'error-message' }, 
+                  React.createElement(Icon, { name: 'alert-circle', size: 14 }),
+                  ' ', formErrors.bookTitle
+                )
             ),
             React.createElement('div', { className: 'form-group' },
               React.createElement('label', { className: 'form-label', htmlFor: 'author' },
@@ -671,23 +882,57 @@ const CampusConnect = () => {
                 className: 'form-input',
                 id: 'author',
                 name: 'author',
-                placeholder: 'Enter author name'
+                placeholder: 'Enter author name',
+                value: localFormData.author,
+                onChange: (e) => handleInputChange('author', e.target.value)
               })
             )
           ),
-          React.createElement('div', { className: 'form-group' },
-            React.createElement('label', { className: 'form-label', htmlFor: 'condition' },
-              'Condition'
+          React.createElement('div', { className: 'form-grid' },
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'condition' },
+                'Condition ',
+                React.createElement('span', { className: 'required' }, '*')
+              ),
+              React.createElement('select', {
+                className: 'form-input',
+                id: 'condition',
+                name: 'condition',
+                value: localFormData.condition,
+                onChange: (e) => handleInputChange('condition', e.target.value)
+              },
+                React.createElement('option', { value: 'Excellent' }, '⭐ Excellent - Like New'),
+                React.createElement('option', { value: 'Good' }, '✓ Good - Minor Wear'),
+                React.createElement('option', { value: 'Fair' }, '○ Fair - Visible Wear'),
+                React.createElement('option', { value: 'Poor' }, '△ Poor - Heavy Wear')
+              ),
+              React.createElement('small', { style: { color: 'var(--muted)', marginTop: '0.25rem', display: 'block' } },
+                localFormData.condition === 'Excellent' && 'Perfect condition, no marks or wear',
+                localFormData.condition === 'Good' && 'Some minor highlighting or notes',
+                localFormData.condition === 'Fair' && 'Noticeable wear but fully functional',
+                localFormData.condition === 'Poor' && 'Heavy wear, may have missing pages'
+              )
             ),
-            React.createElement('select', {
-              className: 'form-input',
-              id: 'condition',
-              name: 'condition'
-            },
-              React.createElement('option', { value: 'Excellent' }, 'Excellent - Like New'),
-              React.createElement('option', { value: 'Good' }, 'Good - Minor Wear'),
-              React.createElement('option', { value: 'Fair' }, 'Fair - Visible Wear'),
-              React.createElement('option', { value: 'Poor' }, 'Poor - Heavy Wear')
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'category' },
+                'Category'
+              ),
+              React.createElement('select', {
+                className: 'form-input',
+                id: 'category',
+                name: 'category',
+                value: localFormData.category,
+                onChange: (e) => handleInputChange('category', e.target.value)
+              },
+                React.createElement('option', { value: 'Computer Science' }, 'Computer Science'),
+                React.createElement('option', { value: 'Mathematics' }, 'Mathematics'),
+                React.createElement('option', { value: 'Physics' }, 'Physics'),
+                React.createElement('option', { value: 'Chemistry' }, 'Chemistry'),
+                React.createElement('option', { value: 'Biology' }, 'Biology'),
+                React.createElement('option', { value: 'Economics' }, 'Economics'),
+                React.createElement('option', { value: 'Engineering' }, 'Engineering'),
+                React.createElement('option', { value: 'Other' }, 'Other')
+              )
             )
           ),
           React.createElement('div', { className: 'form-group' },
@@ -699,8 +944,13 @@ const CampusConnect = () => {
               id: 'description',
               name: 'description',
               rows: 4,
-              placeholder: 'Describe your book, any highlights, notes, etc.'
-            })
+              placeholder: 'Describe your book, any highlights, notes, etc.',
+              value: localFormData.description,
+              onChange: (e) => handleInputChange('description', e.target.value)
+            }),
+            React.createElement('small', { style: { color: 'var(--muted)', marginTop: '0.25rem', display: 'block' } },
+              `${localFormData.description.length}/500 characters`
+            )
           ),
           React.createElement('div', { className: 'form-grid' },
             React.createElement('div', { className: 'form-group' },
@@ -709,14 +959,20 @@ const CampusConnect = () => {
               ),
               React.createElement('input', {
                 type: 'number',
-                className: 'form-input',
+                className: `form-input ${formErrors.deposit && formTouched.deposit ? 'input-error' : ''}`,
                 id: 'deposit',
                 name: 'deposit',
                 min: '0',
                 step: '0.01',
-                defaultValue: '0',
+                value: localFormData.deposit,
+                onChange: (e) => handleInputChange('deposit', e.target.value),
                 placeholder: '0.00'
-              })
+              }),
+              formErrors.deposit && formTouched.deposit && 
+                React.createElement('span', { className: 'error-message' }, 
+                  React.createElement(Icon, { name: 'alert-circle', size: 14 }),
+                  ' ', formErrors.deposit
+                )
             ),
             React.createElement('div', { className: 'form-group' },
               React.createElement('label', { className: 'form-label', htmlFor: 'duration' },
@@ -724,13 +980,55 @@ const CampusConnect = () => {
               ),
               React.createElement('input', {
                 type: 'number',
-                className: 'form-input',
+                className: `form-input ${formErrors.duration && formTouched.duration ? 'input-error' : ''}`,
                 id: 'duration',
                 name: 'duration',
                 min: '1',
-                defaultValue: '7',
+                max: '365',
+                value: localFormData.duration,
+                onChange: (e) => handleInputChange('duration', e.target.value),
                 placeholder: '7'
+              }),
+              formErrors.duration && formTouched.duration && 
+                React.createElement('span', { className: 'error-message' }, 
+                  React.createElement(Icon, { name: 'alert-circle', size: 14 }),
+                  ' ', formErrors.duration
+                )
+            )
+          ),
+          React.createElement('div', { className: 'form-grid' },
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'availableFrom' },
+                'Available From'
+              ),
+              React.createElement('input', {
+                type: 'date',
+                className: 'form-input',
+                id: 'availableFrom',
+                name: 'availableFrom',
+                value: localFormData.availableFrom,
+                onChange: (e) => handleInputChange('availableFrom', e.target.value),
+                min: new Date().toISOString().split('T')[0]
               })
+            ),
+            React.createElement('div', { className: 'form-group' },
+              React.createElement('label', { className: 'form-label', htmlFor: 'availableTo' },
+                'Available To'
+              ),
+              React.createElement('input', {
+                type: 'date',
+                className: `form-input ${formErrors.availableTo && formTouched.availableTo ? 'input-error' : ''}`,
+                id: 'availableTo',
+                name: 'availableTo',
+                value: localFormData.availableTo,
+                onChange: (e) => handleInputChange('availableTo', e.target.value),
+                min: localFormData.availableFrom || new Date().toISOString().split('T')[0]
+              }),
+              formErrors.availableTo && formTouched.availableTo && 
+                React.createElement('span', { className: 'error-message' }, 
+                  React.createElement(Icon, { name: 'alert-circle', size: 14 }),
+                  ' ', formErrors.availableTo
+                )
             )
           ),
           React.createElement('button', {
@@ -738,6 +1036,102 @@ const CampusConnect = () => {
             className: 'btn btn-primary',
             style: { width: '100%', marginTop: '20px' }
           }, '📚 List Book for Lending')
+        )
+      ),
+      
+      // Status Tracking Section
+      myListedBooks.length > 0 && React.createElement('div', { className: 'card', style: { marginTop: '1.5rem' } },
+        React.createElement('h3', { className: 'section-title' },
+          React.createElement(Icon, { name: 'activity', size: 20, className: 'title-icon' }),
+          ' Your Lending Activity'
+        ),
+        React.createElement('div', { className: 'activity-stats', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', marginBottom: '1.5rem' } },
+          React.createElement('div', { className: 'activity-stat-card' },
+            React.createElement('div', { className: 'activity-stat-number', style: { fontSize: '2rem', fontWeight: 'bold', color: '#2563eb' } }, 
+              myListedBooks.length
+            ),
+            React.createElement('div', { className: 'activity-stat-label', style: { fontSize: '0.875rem', color: 'var(--muted)' } }, 
+              'Total Listed'
+            )
+          ),
+          React.createElement('div', { className: 'activity-stat-card' },
+            React.createElement('div', { className: 'activity-stat-number', style: { fontSize: '2rem', fontWeight: 'bold', color: '#059669' } }, 
+              myListedBooks.filter(b => b.status === 'available').length
+            ),
+            React.createElement('div', { className: 'activity-stat-label', style: { fontSize: '0.875rem', color: 'var(--muted)' } }, 
+              'Available'
+            )
+          ),
+          React.createElement('div', { className: 'activity-stat-card' },
+            React.createElement('div', { className: 'activity-stat-number', style: { fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' } }, 
+              myListedBooks.filter(b => b.status === 'pending').length
+            ),
+            React.createElement('div', { className: 'activity-stat-label', style: { fontSize: '0.875rem', color: 'var(--muted)' } }, 
+              'Pending'
+            )
+          ),
+          React.createElement('div', { className: 'activity-stat-card' },
+            React.createElement('div', { className: 'activity-stat-number', style: { fontSize: '2rem', fontWeight: 'bold', color: '#8b5cf6' } }, 
+              myListedBooks.filter(b => b.status === 'borrowed').length
+            ),
+            React.createElement('div', { className: 'activity-stat-label', style: { fontSize: '0.875rem', color: 'var(--muted)' } }, 
+              'On Loan'
+            )
+          )
+        ),
+        
+        React.createElement('div', { className: 'listings-list' },
+          myListedBooks.map((book, idx) => 
+            React.createElement('div', { key: book.id || idx, className: 'listing-item', style: { display: 'flex', alignItems: 'center', padding: '1rem', background: 'var(--bg)', borderRadius: 'var(--radius)', marginBottom: '0.75rem', border: '1px solid var(--border)' } },
+              React.createElement('div', { style: { flex: 1 } },
+                React.createElement('h4', { style: { fontWeight: '600', marginBottom: '0.25rem' } }, book.title),
+                React.createElement('p', { style: { fontSize: '0.875rem', color: 'var(--muted)', marginBottom: '0.5rem' } }, 
+                  `${book.author} • ${book.condition} • $${book.deposit_amount}/week`
+                ),
+                React.createElement('div', { style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' } },
+                  React.createElement('span', { 
+                    className: 'badge',
+                    style: { 
+                      background: book.status === 'available' ? '#dcfce7' : 
+                                 book.status === 'pending' ? '#fef3c7' : 
+                                 book.status === 'borrowed' ? '#ddd6fe' : '#fee2e2',
+                      color: book.status === 'available' ? '#166534' : 
+                             book.status === 'pending' ? '#92400e' : 
+                             book.status === 'borrowed' ? '#5b21b6' : '#991b1b'
+                    }
+                  }, 
+                    book.status === 'available' ? '✓ Available' :
+                    book.status === 'pending' ? '⏳ Pending' :
+                    book.status === 'borrowed' ? '📚 On Loan' : book.status
+                  ),
+                  book.available_from && React.createElement('span', { className: 'badge', style: { fontSize: '0.75rem' } },
+                    `${book.available_from} → ${book.available_to || 'Ongoing'}`
+                  )
+                )
+              ),
+              React.createElement('div', { style: { display: 'flex', gap: '0.5rem' } },
+                React.createElement('button', { 
+                  className: 'btn btn-sm',
+                  style: { border: '1px solid var(--border)' },
+                  onClick: () => showToast('Edit feature coming soon!', 'info')
+                },
+                  React.createElement(Icon, { name: 'edit', size: 16 })
+                ),
+                React.createElement('button', { 
+                  className: 'btn btn-sm',
+                  style: { border: '1px solid #ef4444', color: '#ef4444' },
+                  onClick: () => {
+                    if (confirm(`Remove "${book.title}" from your listings?`)) {
+                      setMyListedBooks(prev => prev.filter(b => b.id !== book.id));
+                      showToast('Book removed from listings', 'success');
+                    }
+                  }
+                },
+                  React.createElement(Icon, { name: 'trash-2', size: 16 })
+                )
+              )
+            )
+          )
         )
       )
     );
