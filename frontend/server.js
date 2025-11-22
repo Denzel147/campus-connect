@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 3000;
+const PORT = 3000; // Always use port 3000 for frontend
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -23,7 +23,15 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  const safePath = req.url === '/' ? '/index.html' : req.url;
+  let safePath;
+  
+  // Handle SPA routing - serve index.html for all routes except static files
+  if (req.url === '/' || req.url === '/app' || req.url.startsWith('/app/')) {
+    safePath = '/index.html';  // Serve the SPA for all app routes
+  } else {
+    safePath = req.url;  // Static files
+  }
+  
   let filePath = path.join(__dirname, path.normalize(safePath));
 
   const extname = String(path.extname(filePath)).toLowerCase();
@@ -50,6 +58,9 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Frontend server running at http://localhost:${PORT}`);
-  console.log(`Open your browser and go to: http://localhost:${PORT}`);
+  console.log('Available routes:');
+  console.log(`  http://localhost:${PORT}/ - Landing page`);
+  console.log(`  http://localhost:${PORT}/app - Main application`);
+  console.log(`  http://localhost:${PORT}/app/production - Production version`);
 });
 

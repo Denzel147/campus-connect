@@ -53,3 +53,15 @@ The application uses PostgreSQL with the following main entities:
 - `npm run lint` - Run ESLint
 - `npm run db:migrate` - Run database migrations
 - `npm run db:seed` - Seed database with sample data
+
+## Sample accounts
+Students:
+
+Email: alice@alustudent.com | Password: password123
+Email: bob@alustudent.com | Password: password123
+Email: carol@alustudent.com | Password: password123
+Email: david@alustudent.com | Password: password123
+
+Administrator:
+
+Email: s.abijuru1@alustudent.com | Password: admin123

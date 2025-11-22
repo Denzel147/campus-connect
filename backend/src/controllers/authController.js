@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { randomBytes } = require('node:crypto');
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { generateVerificationToken, sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
+const webSocketService = require('../utils/webSocketService');
 
 const generateTokens = (userId) => {
   if (!process.env.JWT_SECRET) {
@@ -33,21 +36,39 @@ const register = async (req, res, next) => {
       });
     }
 
-    // Create new user
-    const user = await User.create(req.body);
+    // Generate verification token
+    const verificationToken = generateVerificationToken();
     
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user.user_id);
+    // Create new user with verification token
+    const userData = {
+      ...req.body,
+      email_verified: false,
+      verification_token: verificationToken,
+      verification_token_expires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    };
+    
+    const user = await User.create(userData);
+    
+    // Send verification email (don't block registration if email fails)
+    try {
+      await sendVerificationEmail(user, verificationToken);
+    } catch (emailError) {
+      logger.error('Failed to send verification email:', emailError);
+    }
 
     logger.info(`New user registered: ${user.email}`);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please check your email to verify your account.',
       data: {
-        user,
-        accessToken,
-        refreshToken
+        user: {
+          user_id: user.user_id,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email_verified: user.email_verified
+        }
       }
     });
   } catch (error) {
@@ -229,6 +250,199 @@ const getUserStats = async (req, res, next) => {
   }
 };
 
+// Verify email with token
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token is required'
+      });
+    }
+
+    // Find user with verification token
+    const user = await User.findByVerificationToken(token);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    // Check if token has expired
+    if (new Date() > user.verification_token_expires) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token has expired. Please request a new one.'
+      });
+    }
+
+    // Update user as verified
+    await User.verifyEmail(user.user_id);
+    
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(user);
+    } catch (emailError) {
+      logger.error('Failed to send welcome email:', emailError);
+    }
+
+    // Send real-time notification
+    await webSocketService.sendNotification(user.user_id, {
+      type: 'account_verified',
+      message: 'Welcome to Campus Connect! Your account has been verified successfully.',
+      priority: 'normal'
+    });
+
+    logger.info(`Email verified for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! Welcome to Campus Connect.'
+    });
+  } catch (error) {
+    logger.error('Email verification error:', error);
+    next(error);
+  }
+};
+
+// Resend verification email
+const resendVerification = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const user = await User.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (user.email_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = generateVerificationToken();
+    await User.updateVerificationToken(user.user_id, verificationToken);
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user, verificationToken);
+    } catch (emailError) {
+      logger.error('Failed to resend verification email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send verification email. Please try again later.'
+      });
+    }
+
+    logger.info(`Verification email resent to: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Verification email sent successfully. Please check your inbox.'
+    });
+  } catch (error) {
+    logger.error('Resend verification error:', error);
+    next(error);
+  }
+};
+
+// Password reset request
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const user = await User.findByEmail(email);
+    if (!user) {
+      // Don't reveal if email exists for security
+      return res.json({
+        success: true,
+        message: 'If an account with that email exists, a password reset link has been sent.'
+      });
+    }
+
+    // Generate reset token
+    const resetToken = randomBytes(32).toString('hex');
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await User.setPasswordResetToken(user.user_id, resetToken, resetTokenExpires);
+
+    // Send password reset email
+    try {
+      await sendPasswordResetEmail(user, resetToken);
+    } catch (emailError) {
+      logger.error('Failed to send password reset email:', emailError);
+    }
+
+    logger.info(`Password reset requested for: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.'
+    });
+  } catch (error) {
+    logger.error('Forgot password error:', error);
+    next(error);
+  }
+};
+
+// Reset password with token
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token and new password are required'
+      });
+    }
+
+    const user = await User.findByResetToken(token);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    // Reset password
+    await User.resetPassword(user.user_id, newPassword);
+
+    logger.info(`Password reset completed for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+  } catch (error) {
+    logger.error('Reset password error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -236,5 +450,9 @@ module.exports = {
   getProfile,
   updateProfile,
   changePassword,
-  getUserStats
+  getUserStats,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword
 };

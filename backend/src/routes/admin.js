@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { authenticate } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -15,7 +15,7 @@ const { authenticate } = require('../middleware/auth');
  *       200:
  *         description: Dashboard statistics retrieved successfully
  */
-router.get('/dashboard', authenticate, adminController.getDashboardStats);
+router.get('/dashboard', authenticateToken, adminController.getDashboardStats);
 
 /**
  * @swagger
@@ -43,7 +43,7 @@ router.get('/dashboard', authenticate, adminController.getDashboardStats);
  *       200:
  *         description: Book requests retrieved successfully
  */
-router.get('/requests', authenticate, adminController.getAllBookRequests);
+router.get('/requests', authenticateToken, adminController.getAllBookRequests);
 
 /**
  * @swagger
@@ -63,7 +63,7 @@ router.get('/requests', authenticate, adminController.getAllBookRequests);
  *       200:
  *         description: Book statistics retrieved successfully
  */
-router.get('/books/:itemId/stats', authenticate, adminController.getBookStatistics);
+router.get('/books/:itemId/stats', authenticateToken, adminController.getBookStatistics);
 
 /**
  * @swagger
@@ -83,7 +83,7 @@ router.get('/books/:itemId/stats', authenticate, adminController.getBookStatisti
  *       200:
  *         description: Book requesters retrieved successfully
  */
-router.get('/books/:itemId/requesters', authenticate, adminController.getBookRequesters);
+router.get('/books/:itemId/requesters', authenticateToken, adminController.getBookRequesters);
 
 /**
  * @swagger
@@ -103,6 +103,108 @@ router.get('/books/:itemId/requesters', authenticate, adminController.getBookReq
  *       200:
  *         description: User activity retrieved successfully
  */
-router.get('/users/:userId/activity', authenticate, adminController.getUserActivity);
+router.get('/users/:userId/activity', authenticateToken, adminController.getUserActivity);
+
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: Get all users for admin management
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Users retrieved successfully
+ */
+router.get('/users', authenticateToken, adminController.getAllUsers);
+
+/**
+ * @swagger
+ * /api/admin/items:
+ *   get:
+ *     summary: Get all items for admin management
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Items retrieved successfully
+ */
+router.get('/items', authenticateToken, adminController.getAllItems);
+
+/**
+ * @swagger
+ * /api/admin/transactions:
+ *   get:
+ *     summary: Get all transactions for admin management
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Transactions retrieved successfully
+ */
+router.get('/transactions', authenticateToken, adminController.getAllTransactions);
+
+// Test endpoint without auth
+router.get('/test', (req, res) => {
+  res.json({ success: true, message: 'Admin mock controller is working!' });
+});
 
 module.exports = router;

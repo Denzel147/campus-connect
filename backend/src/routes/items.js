@@ -1,6 +1,7 @@
 const express = require('express');
 const { validate, validateQuery } = require('../middleware/validation');
 const { itemSchemas } = require('../utils/validation');
+const { upload, processImages } = require('../middleware/fileUpload');
 const {
   createItem,
   getItems,
@@ -130,7 +131,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.post('/', authenticateToken, validate(itemSchemas.create), createItem);
+router.post('/', authenticateToken, upload, processImages, validate(itemSchemas.create), createItem);
 
 /**
  * @swagger
@@ -279,6 +280,20 @@ router.get('/recent', getRecentItems);
 
 /**
  * @swagger
+ * /api/items/my-items:
+ *   get:
+ *     summary: Get user's own items
+ *     tags: [Items]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User's items retrieved successfully
+ */
+router.get('/my-items', authenticateToken, getMyItems);
+
+/**
+ * @swagger
  * /api/items/{id}:
  *   get:
  *     summary: Get item by ID
@@ -416,5 +431,35 @@ router.delete('/:id', authenticateToken, deleteItem);
  *         description: Item not found
  */
 router.post('/:id/request', authenticateToken, requestToBorrow);
+
+/**
+ * @swagger
+ * /api/items/{id}/status:
+ *   patch:
+ *     summary: Update item availability status
+ *     tags: [Items]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               availability_status:
+ *                 type: string
+ *                 enum: [available, borrowed, unavailable]
+ *     responses:
+ *       200:
+ *         description: Item status updated successfully
+ */
+router.patch('/:id/status', authenticateToken, updateItem);
 
 module.exports = router;

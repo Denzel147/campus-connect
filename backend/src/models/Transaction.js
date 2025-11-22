@@ -3,20 +3,20 @@ const db = require('../config/database');
 class Transaction {
   static async create(transactionData) {
     const {
-      item_id, lender_id, borrower_id, transaction_type,
-      borrow_date, due_date, notes
+      item_id, lender_id, borrower_id, 
+      borrow_date, due_date, notes, transaction_status = 'pending', transaction_type = 'borrow'
     } = transactionData;
 
     const query = `
       INSERT INTO transactions (
-        item_id, lender_id, borrower_id, transaction_type,
-        borrow_date, due_date, notes
+        item_id, lender_id, borrower_id,
+        borrow_date, due_date, notes, transaction_status, transaction_type
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
-    const values = [item_id, lender_id, borrower_id, transaction_type, borrow_date, due_date, notes];
+    const values = [item_id, lender_id, borrower_id, borrow_date, due_date, notes, transaction_status, transaction_type];
     const { rows } = await db.query(query, values);
     return rows[0];
   }
@@ -77,16 +77,16 @@ class Transaction {
 
     return {
       transactions: rows,
-      totalCount: rows.length > 0 ? parseInt(rows[0].total_count) : 0,
+      totalCount: rows.length > 0 ? Number.parseInt(rows[0].total_count) : 0,
       page,
-      totalPages: rows.length > 0 ? Math.ceil(parseInt(rows[0].total_count) / limit) : 0
+      totalPages: rows.length > 0 ? Math.ceil(Number.parseInt(rows[0].total_count) / limit) : 0
     };
   }
 
   static async updateStatus(transactionId, status, userId, notes = null) {
     let query = `
       UPDATE transactions 
-      SET transaction_status = $1, date_updated = CURRENT_TIMESTAMP
+      SET transaction_status = $1
     `;
     let values = [status];
     let paramCount = 2;
@@ -187,6 +187,78 @@ class Transaction {
     `;
 
     const { rows } = await db.query(query);
+    return rows[0];
+  }
+
+  static async findByItemAndBorrower(itemId, borrowerId) {
+    const query = `
+      SELECT * FROM transactions
+      WHERE item_id = $1 AND borrower_id = $2
+      ORDER BY date_created DESC
+      LIMIT 1
+    `;
+
+    const { rows } = await db.query(query, [itemId, borrowerId]);
+    return rows[0];
+  }
+
+  // Get requests received by a user (as lender/owner) - ALL statuses
+  static async getReceivedRequests(userId) {
+    const query = `
+      SELECT 
+        t.*,
+        i.item_name,
+        i.condition,
+        i.description,
+        i.sharing_type,
+        borrower.full_name as borrower_name,
+        borrower.full_name as requester_name,
+        borrower.email as borrower_email,
+        borrower.phone_number as borrower_phone,
+        borrower.institution as campus,
+        borrower.department as dorm
+      FROM transactions t
+      JOIN items i ON t.item_id = i.item_id
+      JOIN users borrower ON t.borrower_id = borrower.user_id
+      WHERE t.lender_id = $1
+      ORDER BY t.date_created DESC
+    `;
+
+    const { rows } = await db.query(query, [userId]);
+    return rows;
+  }
+
+  // Create payment record
+  static async createPayment(transactionId, paymentMethod, amount) {
+    const query = `
+      UPDATE transactions 
+      SET payment_method = $1, payment_amount = $2, payment_status = 'pending'
+      WHERE transaction_id = $3
+      RETURNING *
+    `;
+
+    const { rows } = await db.query(query, [paymentMethod, amount, transactionId]);
+    return rows[0];
+  }
+
+  // Update payment status
+  static async updatePayment(transactionId, paymentData) {
+    const query = `
+      UPDATE transactions 
+      SET 
+        payment_status = $1,
+        payment_reference = $2,
+        payment_processed_at = $3
+      WHERE transaction_id = $4
+      RETURNING *
+    `;
+
+    const { rows } = await db.query(query, [
+      paymentData.status,
+      paymentData.reference,
+      paymentData.processed_at,
+      transactionId
+    ]);
     return rows[0];
   }
 }

@@ -5,27 +5,32 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
+const { createServer } = require('node:http');
 require('dotenv').config();
 
 const logger = require('./config/logger');
 const swaggerSpecs = require('./config/swagger');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const webSocketService = require('./utils/webSocketService');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 const itemRoutes = require('./routes/items');
 const transactionRoutes = require('./routes/transactions');
 const categoryRoutes = require('./routes/categories');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
+const classroomRoutes = require('./routes/classrooms');
+const paymentRoutes = require('./routes/payments');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  windowMs: Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: Number.parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -49,7 +54,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:6000',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,
   optionsSuccessStatus: 200
 }));
@@ -89,11 +94,15 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/classrooms', classroomRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
@@ -119,7 +128,12 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, () => {
+const server = createServer(app);
+
+// Initialize WebSocket service
+webSocketService.initialize(server);
+
+server.listen(PORT, () => {
   logger.info(`CampusConnect API server running on port ${PORT}`);
   logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
   logger.info(`Health check available at http://localhost:${PORT}/health`);

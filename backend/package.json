@@ -9,7 +9,12 @@
     "test": "jest",
     "lint": "eslint src/",
     "db:migrate": "node src/utils/migrate.js",
-    "db:seed": "node src/utils/seed.js"
+    "db:seed": "node src/utils/seed.js",
+    "db:setup": "node src/utils/setup.js setup",
+    "db:reset": "node src/utils/setup.js reset",
+    "db:status": "node src/utils/setup.js status",
+    "db:clear": "node src/utils/setup.js clear",
+    "db:drop": "node src/utils/setup.js drop"
   },
   "keywords": [
     "book-lending",
@@ -32,10 +37,13 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7",
     "sequelize-cli": "^6.6.3",
+    "sharp": "^0.32.6",
+    "socket.io": "^4.7.4",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "winston": "^3.11.0"

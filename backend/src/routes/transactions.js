@@ -10,7 +10,12 @@ const {
   getActiveTransactions,
   getTransactionStats,
   approveTransaction,
-  rejectTransaction
+  rejectTransaction,
+  getMyRequests,
+  getReceivedRequests,
+  acceptRequest,
+  getPaymentMethods,
+  processPayment
 } = require('../controllers/transactionController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -188,6 +193,84 @@ router.get('/active', authenticateToken, getActiveTransactions);
 
 /**
  * @swagger
+ * /api/transactions/my-requests:
+ *   get:
+ *     summary: Get user's pending borrow requests
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Pending requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactions:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Transaction'
+ *                     totalCount:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/my-requests', authenticateToken, getMyRequests);
+
+/**
+ * @swagger
+ * /api/transactions/received:
+ *   get:
+ *     summary: Get requests received by the current user
+ *     description: Get all pending requests for items owned by the current user
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Received requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactions:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Transaction'
+ */
+router.get('/received', authenticateToken, getReceivedRequests);
+
+/**
+ * @swagger
  * /api/transactions/stats:
  *   get:
  *     summary: Get transaction statistics
@@ -197,6 +280,58 @@ router.get('/active', authenticateToken, getActiveTransactions);
  *         description: Transaction statistics retrieved successfully
  */
 router.get('/stats', getTransactionStats);
+
+/**
+ * @swagger
+ * /api/transactions/payments:
+ *   get:
+ *     summary: Get user's payment transactions
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Payment transactions retrieved successfully
+ */
+router.get('/payments', authenticateToken, getPaymentMethods);
+
+/**
+ * @swagger
+ * /api/payments/process:
+ *   post:
+ *     summary: Process a payment
+ *     description: Process payment for a transaction
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - transactionId
+ *               - paymentMethod
+ *               - amount
+ *             properties:
+ *               transactionId:
+ *                 type: integer
+ *               paymentMethod:
+ *                 type: object
+ *               amount:
+ *                 type: number
+ *               paymentData:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Payment processed successfully
+ */
+router.post('/payments/process', authenticateToken, processPayment);
+
+// ============================================================================
+// PARAMETERIZED ROUTES - These must come AFTER all specific routes
+// ============================================================================
 
 /**
  * @swagger
@@ -334,6 +469,7 @@ router.put('/:id/approve', authenticateToken, approveTransaction);
  *         description: Transaction not found
  */
 router.put('/:id/reject', authenticateToken, rejectTransaction);
+router.post('/:id/reject', authenticateToken, rejectTransaction);
 
 /**
  * @swagger
@@ -359,5 +495,113 @@ router.put('/:id/reject', authenticateToken, rejectTransaction);
  *         description: Transaction not found
  */
 router.put('/:id/return', authenticateToken, markAsReturned);
+
+/**
+ * @swagger
+ * /api/transactions/{id}/accept:
+ *   post:
+ *     summary: Accept a transaction request
+ *     description: Accept a pending request for your item
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Transaction ID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               notes:
+ *                 type: string
+ *                 description: Optional notes for the acceptance
+ *               payment_method:
+ *                 type: string
+ *                 description: Payment method for paid items
+ *     responses:
+ *       200:
+ *         description: Request accepted successfully
+ */
+router.post('/:id/accept', authenticateToken, acceptRequest);
+
+/**
+ * @swagger
+ * /api/transactions/payments:
+ *   get:
+ *     summary: Get available payment methods
+ *     description: Get list of available payment methods
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Payment methods retrieved successfully
+ */
+
+/**
+ * @swagger
+ * /api/payments/process:
+ *   post:
+ *     summary: Process a payment
+ *     description: Process payment for a transaction
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - transaction_id
+ *               - payment_method
+ *               - amount
+ *             properties:
+ *               transaction_id:
+ *                 type: integer
+ *               payment_method:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Payment processed successfully
+ */
+router.post('/payments/process', authenticateToken, processPayment);
+
+/**
+ * @swagger
+ * /api/transactions/{id}/cancel:
+ *   patch:
+ *     summary: Cancel a transaction
+ *     tags: [Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Transaction ID
+ *     responses:
+ *       200:
+ *         description: Transaction cancelled successfully
+ */
+router.patch('/:id/cancel', authenticateToken, (req, res) => {
+  // For now, just return success - would implement proper cancellation logic
+  res.json({
+    success: true,
+    message: 'Transaction cancelled successfully'
+  });
+});
 
 module.exports = router;

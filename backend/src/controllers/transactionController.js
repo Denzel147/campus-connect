@@ -58,8 +58,8 @@ const getTransactions = async (req, res, next) => {
     const result = await Transaction.findByUser(
       req.user.userId,
       role,
-      parseInt(page),
-      parseInt(limit)
+      Number.parseInt(page),
+      Number.parseInt(limit)
     );
 
     res.json({
@@ -68,6 +68,28 @@ const getTransactions = async (req, res, next) => {
     });
   } catch (error) {
     logger.error('Get transactions error:', error);
+    next(error);
+  }
+};
+
+const getMyRequests = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    
+    // Get all transactions where user is the borrower
+    const result = await Transaction.findByUser(
+      req.user.userId,
+      'borrower',
+      Number.parseInt(page),
+      Number.parseInt(limit)
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Get my requests error:', error);
     next(error);
   }
 };
@@ -295,6 +317,165 @@ const rejectTransaction = async (req, res, next) => {
   }
 };
 
+// Get requests received by the current user (as a lender/owner)
+const getReceivedRequests = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    
+    const receivedRequests = await Transaction.getReceivedRequests(userId);
+
+    res.json({
+      success: true,
+      data: { transactions: receivedRequests }
+    });
+  } catch (error) {
+    logger.error('Get received requests error:', error);
+    next(error);
+  }
+};
+
+// Accept a transaction request
+const acceptRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { notes, payment_method } = req.body;
+
+    const transaction = await Transaction.findById(id);
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    // Check if user is the lender/owner
+    if (transaction.lender_id !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the lender can accept this transaction'
+      });
+    }
+
+    // Update transaction status
+    const updatedTransaction = await Transaction.updateStatus(
+      id,
+      'approved',
+      req.user.userId,
+      notes
+    );
+
+    // Get item details to check if payment is needed
+    const item = await Item.findById(transaction.item_id);
+    
+    // If there's a payment involved (for sell transactions), create payment record
+    if (item && item.sharing_type === 'sell' && payment_method) {
+      // For now, we'll assume a default price since the schema doesn't have a price field
+      const defaultPrice = 10; // This should come from the item when price field is added
+      await Transaction.createPayment(id, payment_method, defaultPrice);
+    }
+
+    // Create notification for borrower
+    await Notification.create({
+      user_id: transaction.borrower_id,
+      notification_type: 'transaction_approved',
+      message: `Your request for "${transaction.item_name || 'the item'}" has been approved!`,
+      related_item_id: transaction.item_id,
+      related_transaction_id: id
+    });
+
+    logger.info(`Transaction ${id} accepted by lender ${req.user.userId}`);
+
+    res.json({
+      success: true,
+      message: 'Request accepted successfully',
+      data: { transaction: updatedTransaction }
+    });
+  } catch (error) {
+    logger.error('Accept request error:', error);
+    next(error);
+  }
+};
+
+// Get payment methods (dummy for now)
+const getPaymentMethods = async (req, res) => {
+  const dummyPaymentMethods = [
+    {
+      id: 1,
+      type: 'card',
+      name: 'Credit/Debit Card',
+      description: 'Visa, Mastercard, etc.',
+      icon: 'credit-card',
+      enabled: true
+    },
+    {
+      id: 2,
+      type: 'mobile_money',
+      name: 'MTN Mobile Money',
+      description: 'Pay with MTN MoMo',
+      icon: 'smartphone',
+      enabled: true
+    },
+    {
+      id: 3,
+      type: 'mobile_money',
+      name: 'Airtel Money',
+      description: 'Pay with Airtel Money',
+      icon: 'smartphone',
+      enabled: true
+    },
+    {
+      id: 4,
+      type: 'bank_transfer',
+      name: 'Bank Transfer',
+      description: 'Direct bank transfer',
+      icon: 'bank',
+      enabled: false
+    }
+  ];
+
+  res.json({
+    success: true,
+    data: dummyPaymentMethods
+  });
+};
+
+// Process payment (dummy implementation)
+const processPayment = async (req, res, next) => {
+  try {
+    const { transaction_id, payment_method, amount } = req.body;
+
+    // Simulate payment processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Dummy payment processing - always succeed for now
+    const paymentId = `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const payment = {
+      id: paymentId,
+      transaction_id,
+      payment_method,
+      amount,
+      status: 'completed',
+      processed_at: new Date().toISOString(),
+      reference: `REF${Date.now()}`
+    };
+
+    // Update transaction with payment info
+    await Transaction.updatePayment(transaction_id, payment);
+
+    logger.info(`Payment processed: ${paymentId} for transaction ${transaction_id}`);
+
+    res.json({
+      success: true,
+      message: 'Payment processed successfully',
+      data: { payment }
+    });
+  } catch (error) {
+    logger.error('Process payment error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   createTransaction,
   getTransactions,
@@ -304,5 +485,10 @@ module.exports = {
   getActiveTransactions,
   getTransactionStats,
   approveTransaction,
-  rejectTransaction
+  rejectTransaction,
+  getMyRequests,
+  getReceivedRequests,
+  acceptRequest,
+  getPaymentMethods,
+  processPayment
 };

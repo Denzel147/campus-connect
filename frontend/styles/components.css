@@ -1,0 +1,696 @@
+/* Additional Styles for New Components */
+
+/* My Requests Page Specific Styles */
+.my-requests {
+  padding: 2rem 0;
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.request-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.request-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.request-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.request-details {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.request-details p {
+  margin: 0.5rem 0;
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.orange {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.status-badge.green {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.status-badge.red {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.status-badge.blue {
+  background: #dbeafe;
+  color: #2563eb;
+  border: 1px solid #93c5fd;
+}
+
+/* Payments Page Specific Styles */
+.payments {
+  padding: 2rem 0;
+}
+
+.payment-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.summary-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-card .amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.payment-sections {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.payment-sections section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.payment-sections h2 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Classrooms Page Specific Styles */
+.classrooms {
+  padding: 2rem 0;
+}
+
+.classroom-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.classroom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.classroom-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.classroom-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.classroom-card.joined {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.classroom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.classroom-name {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.classroom-code {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: monospace;
+}
+
+.classroom-description {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.classroom-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.classroom-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.classroom-actions {
+  margin-top: auto;
+}
+
+/* Loading Placeholders */
+.loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Icon Component Styles */
+.icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.icon-container svg {
+  display: block;
+}
+
+.icon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-weight: normal;
+  line-height: 1;
+}
+
+/* Icon specific adjustments for common sizes */
+.icon-container[data-size="16"] {
+  width: 16px;
+  height: 16px;
+  font-size: 14px;
+}
+
+.icon-container[data-size="20"] {
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+}
+
+.icon-container[data-size="24"] {
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+}
+
+.icon-container[data-size="32"] {
+  width: 32px;
+  height: 32px;
+  font-size: 24px;
+}
+
+/* Icon System Enhancements */
+.icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.icon-fallback {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: normal;
+  line-height: 1;
+}
+
+/* Spinning Animation for Loading Icons */
+@keyframes spinning {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spinning 1s linear infinite;
+  display: inline-block;
+}
+
+/* Streak specific styles */
+.streak-icon {
+  color: #ff6b35;
+  filter: drop-shadow(0 1px 2px rgba(255, 107, 53, 0.3));
+}
+
+/* Icon System Enhancements - Mixed Font Awesome Styles */
+.fas, .far, [class*="fa-"] {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: opacity 0.2s ease;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Regular icons with subtle styling */
+.far {
+  font-weight: 400 !important;
+  opacity: 0.9;
+}
+
+/* Solid icons maintain full opacity */
+.fas {
+  font-weight: 900 !important;
+  opacity: 1;
+}
+
+/* Hover effects for both types */
+.far:hover, .fas:hover, 
+button:hover .far, button:hover .fas, 
+.active .far, .active .fas {
+  opacity: 1;
+}
+
+/* Special cases for specific functionality */
+.spinning,
+.notification-badge + i,
+.status-badge i {
+  opacity: 1;
+}
+
+/* Ensure icons are properly centered */
+.icon-container, 
+i[class*="fa-"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+/* Owner indicator styling */
+.owner-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: var(--radius-md);
+  color: #0369a1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  justify-content: center;
+}
+
+/* Secondary button styling for "Already Requested" */
+.btn-secondary {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-secondary:disabled:hover {
+  background: #f9fafb;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}
+
+/* Received Requests Styles */
+.received-requests {
+  padding: 2rem 0;
+}
+
+.received-request-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.received-request-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Status-specific styling */
+.received-request-card.pending {
+  border-left: 4px solid var(--warning);
+}
+
+.received-request-card.approved {
+  border-left: 4px solid var(--success);
+  background: #fafffe;
+}
+
+.received-request-card.rejected {
+  border-left: 4px solid var(--error);
+  background: #fffafa;
+}
+
+.received-request-card.completed {
+  border-left: 4px solid var(--info);
+  background: #f8faff;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.request-item-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.orange {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.status-badge.green {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.status-badge.red {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-badge.blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.request-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.sharing-type {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.price {
+  font-weight: 600;
+  color: var(--success);
+}
+
+.requester-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.requester-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.request-date {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.request-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: var(--radius);
+  border-left: 3px solid var(--primary);
+}
+
+.request-message p {
+  margin: 0;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.request-meta {
+  display: flex;
+  gap: 1rem;
+  margin: 0.75rem 0;
+}
+
+.item-condition, .campus {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Contact Information Styles */
+.contact-info {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.contact-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.contact-item span {
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #d1fae5;
+}
+
+/* Status Notice Styles */
+.status-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-notice.approved {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.status-notice.rejected {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-notice.completed {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-reject {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.btn-reject:hover {
+  background: var(--error);
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .payment-sections {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-summary {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .classroom-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .request-card {
+    padding: 1rem;
+  }
+
+  .request-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .request-value {
+    align-items: flex-start;
+  }
+  
+  .request-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .request-actions {
+    flex-direction: column;
+  }
+  
+  .contact-details {
+    gap: 0.75rem;
+  }
+  
+  .contact-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

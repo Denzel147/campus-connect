@@ -3,12 +3,21 @@ const Joi = require('joi');
 const userSchemas = {
   register: Joi.object({
     full_name: Joi.string().min(2).max(100).required(),
-    email: Joi.string().email().required(),
+    email: Joi.string().email().pattern(/@alustudent\.com$/).required(),
     password: Joi.string().min(6).max(100).required(),
-    phone_number: Joi.string().pattern(/^[+]?[1-9][\d]{0,15}$/).optional(),
-    institution: Joi.string().max(100).optional(),
-    department: Joi.string().max(100).optional(),
-    student_id: Joi.string().max(50).optional()
+    confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+    student_id: Joi.string().min(1).max(50).required(),
+    major: Joi.string().min(1).max(100).required(),
+    year: Joi.string().valid('Year 1', 'Year 2', 'Year 3', 'Year 4', 'Graduate').required(),
+    campus: Joi.string().valid('Rwanda', 'Mauritius').default('Rwanda'),
+    dorm: Joi.string().max(100).optional(),
+    room_number: Joi.string().max(20).optional(),
+    phone_number: Joi.string().pattern(/^[+]?[1-9]\d{0,15}$/).optional(),
+    whatsapp_number: Joi.string().pattern(/^[+]?[1-9]\d{0,15}$/).optional(),
+    academic_interests: Joi.array().items(Joi.string().max(100)).max(10).default([]),
+    terms_agreed: Joi.boolean().valid(true).required(),
+    institution: Joi.string().max(100).default('African Leadership University'),
+    department: Joi.string().max(100).optional()
   }),
 
   login: Joi.object({
@@ -18,10 +27,17 @@ const userSchemas = {
 
   updateProfile: Joi.object({
     full_name: Joi.string().min(2).max(100).optional(),
-    phone_number: Joi.string().pattern(/^[+]?[1-9][\d]{0,15}$/).optional(),
+    phone_number: Joi.string().pattern(/^[+]?[1-9]\d{0,15}$/).optional(),
+    whatsapp_number: Joi.string().pattern(/^[+]?[1-9]\d{0,15}$/).optional(),
     institution: Joi.string().max(100).optional(),
     department: Joi.string().max(100).optional(),
-    student_id: Joi.string().max(50).optional()
+    student_id: Joi.string().max(50).optional(),
+    major: Joi.string().max(100).optional(),
+    year: Joi.string().valid('Year 1', 'Year 2', 'Year 3', 'Year 4', 'Graduate').optional(),
+    campus: Joi.string().valid('Rwanda', 'Mauritius').optional(),
+    dorm: Joi.string().max(100).optional(),
+    room_number: Joi.string().max(20).optional(),
+    academic_interests: Joi.array().items(Joi.string().max(100)).max(10).optional()
   }),
 
   changePassword: Joi.object({

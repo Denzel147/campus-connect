@@ -1,12 +1,28 @@
 const Item = require('../models/Item');
 const Notification = require('../models/Notification');
 const logger = require('../config/logger');
+const { generateImageSizes } = require('../utils/imageGenerator');
+const webSocketService = require('../utils/webSocketService');
 
 const createItem = async (req, res, next) => {
   try {
-    const item = await Item.create(req.body, req.user.userId);
+    // Add images from uploaded files if any
+    const images = req.processedImages || [];
+    const itemData = {
+      ...req.body,
+      images: images.map(img => img.paths)
+    };
+
+    const item = await Item.create(itemData, req.user.userId);
 
     logger.info(`New item created: ${item.item_name} by user ${req.user.userId}`);
+
+    // Send real-time notification to interested users (same campus/category)
+    webSocketService.sendNotification(req.user.userId, {
+      type: 'item_created',
+      message: `Your item "${item.item_name}" has been listed successfully!`,
+      priority: 'normal'
+    });
 
     res.status(201).json({
       success: true,
@@ -22,7 +38,15 @@ const createItem = async (req, res, next) => {
 const getItems = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, ...filters } = req.query;
-    const result = await Item.search(filters, parseInt(page), parseInt(limit));
+    const result = await Item.search(filters, Number.parseInt(page), Number.parseInt(limit));
+
+    // Add images to items
+    if (result.items) {
+      result.items = result.items.map(item => ({
+        ...item,
+        image: generateImageSizes(item.item_name, item.category, item.condition)
+      }));
+    }
 
     res.json({
       success: true,
@@ -46,9 +70,15 @@ const getItemById = async (req, res, next) => {
       });
     }
 
+    // Add image to item
+    const itemWithImage = {
+      ...item,
+      image: generateImageSizes(item.item_name, item.category, item.condition)
+    };
+
     res.json({
       success: true,
-      data: { item }
+      data: { item: itemWithImage }
     });
   } catch (error) {
     logger.error('Get item by ID error:', error);
@@ -60,6 +90,14 @@ const getMyItems = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const result = await Item.findByOwner(req.user.userId, parseInt(page), parseInt(limit));
+
+    // Add images to items
+    if (result.items) {
+      result.items = result.items.map(item => ({
+        ...item,
+        image: generateImageSizes(item.item_name, item.category, item.condition)
+      }));
+    }
 
     res.json({
       success: true,
@@ -179,6 +217,29 @@ const requestToBorrow = async (req, res, next) => {
       });
     }
 
+    // Check if user already has a pending request for this item
+    const Transaction = require('../models/Transaction');
+    const existingRequest = await Transaction.findByItemAndBorrower(
+      parseInt(id),
+      req.user.userId
+    );
+
+    if (existingRequest && existingRequest.transaction_status === 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending request for this item'
+      });
+    }
+
+    // Create transaction record
+    const transaction = await Transaction.create({
+      item_id: parseInt(id),
+      lender_id: item.owner_id,
+      borrower_id: req.user.userId,
+      transaction_type: 'borrow',
+      transaction_status: 'pending'
+    });
+
     // Create notification for the lender
     await Notification.createBorrowRequest(
       parseInt(id),
@@ -190,7 +251,8 @@ const requestToBorrow = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Borrow request sent successfully'
+      message: 'Borrow request sent successfully',
+      data: { transaction }
     });
   } catch (error) {
     logger.error('Request to borrow error:', error);
