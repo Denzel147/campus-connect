@@ -696,7 +696,7 @@ const LandingPage = ({ navigate }) => {
 const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     fullName: '', email: '', password: '', confirmPassword: '',
-    studentId: '', major: '', year: '', campus: 'Rwanda',
+    studentId: '', major: '', year: 'Year 1', campus: 'Rwanda',
     dorm: '', roomNumber: '', phoneNumber: '', whatsappNumber: '',
     interests: [], agreeToTerms: false
   });
@@ -723,7 +723,25 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    // For signup, only allow submission on the final step
+    if (mode === 'signup' && currentStep !== stepTitles.length) {
+      console.log('Form submission blocked - not on final step. Current step:', currentStep, 'Required step:', stepTitles.length);
+      console.log('Current form data:', formData);
+      showError(`Please complete all ${stepTitles.length} steps before submitting. You are currently on step ${currentStep}.`);
+      return;
+    }
+    
+    console.log('=== FORM SUBMISSION START ===');
+    console.log('Current step:', currentStep);
+    console.log('Total steps:', stepTitles.length);
+    console.log('Form data before validation:', formData);
+    
+    if (!validateForm()) {
+      console.log('=== VALIDATION FAILED ===');
+      console.log('Errors:', errors);
+      return;
+    }
 
     setLoading(true);
     
@@ -738,21 +756,26 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
         };
       } else {
         payload = {
-          fullName: formData.fullName,
+          full_name: formData.fullName,
           email: formData.email,
           password: formData.password,
           confirmPassword: formData.confirmPassword,
-          studentId: formData.studentId,
+          student_id: formData.studentId,
           major: formData.major,
           year: formData.year,
           campus: formData.campus,
-          dorm: formData.dorm,
-          roomNumber: formData.roomNumber,
-          phoneNumber: formData.phoneNumber,
-          whatsappNumber: formData.whatsappNumber,
-          academicInterests: formData.interests,
-          termsAgreed: formData.agreeToTerms
+          dorm: formData.dorm || null,
+          room_number: formData.roomNumber || null,
+          phone_number: formData.phoneNumber || null,
+          whatsapp_number: formData.whatsappNumber || null,
+          academic_interests: formData.interests || [],
+          terms_agreed: formData.agreeToTerms,
+          institution: 'African Leadership University'
         };
+        
+        // Debug logging
+        console.log('Registration payload:', payload);
+        console.log('Form data:', formData);
       }
 
       const response = await fetch(`http://localhost:3001${endpoint}`, {
@@ -766,6 +789,16 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
       const data = await response.json();
 
       if (!response.ok) {
+        console.error('Registration failed:', data);
+        
+        // If validation errors, show specific field errors
+        if (data.errors && Array.isArray(data.errors)) {
+          const errorMessages = data.errors.map(err => `${err.field}: ${err.message}`).join('\n');
+          showError(`Validation failed:\n${errorMessages}`);
+        } else {
+          showError(data.message || 'Authentication failed');
+        }
+        
         throw new Error(data.message || 'Authentication failed');
       }
 
@@ -793,21 +826,45 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
     const newErrors = {};
     
     if (mode === 'signup') {
-      if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-      if (!formData.email.includes('@alustudent.com')) {
-        newErrors.email = 'Must use ALU email (@alustudent.com)';
+      // Debug logging
+      console.log('Validating form with data:', formData);
+      
+      if (!formData.fullName || !formData.fullName.trim()) {
+        newErrors.fullName = 'Full name is required';
+        console.log('Full name is missing:', formData.fullName);
       }
-      if (formData.password.length < 6) {
+      if (!formData.email || !formData.email.includes('@alustudent.com')) {
+        newErrors.email = 'Must use ALU email (@alustudent.com)';
+        console.log('Email is invalid:', formData.email);
+      }
+      if (!formData.password || formData.password.length < 6) {
         newErrors.password = 'Password must be at least 6 characters';
+        console.log('Password is invalid:', formData.password?.length);
       }
       if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = 'Passwords do not match';
       }
-      if (!formData.studentId.trim()) newErrors.studentId = 'Student ID is required';
-      if (!formData.major) newErrors.major = 'Major is required';
-      if (!formData.year) newErrors.year = 'Year is required';
-      if (!formData.campus) newErrors.campus = 'Campus is required';
-      if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to terms';
+      if (!formData.studentId || !formData.studentId.trim()) {
+        newErrors.studentId = 'Student ID is required';
+        console.log('Student ID is missing:', formData.studentId);
+      }
+      if (!formData.major) {
+        newErrors.major = 'Major is required';
+        console.log('Major is missing:', formData.major);
+      }
+      if (!formData.year) {
+        newErrors.year = 'Year is required';
+        console.log('Year is missing:', formData.year);
+      }
+      if (!formData.campus) {
+        newErrors.campus = 'Campus is required';
+      }
+      if (!formData.agreeToTerms) {
+        newErrors.agreeToTerms = 'You must agree to terms';
+        console.log('Terms not agreed:', formData.agreeToTerms);
+      }
+      
+      console.log('Validation errors:', newErrors);
     } else {
       if (!formData.email.trim()) newErrors.email = 'Email is required';
       if (!formData.password.trim()) newErrors.password = 'Password is required';
@@ -846,8 +903,14 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
   };
 
   const nextStep = () => {
+    console.log('Next step triggered. Current step:', currentStep);
+    console.log('Form data at this step:', formData);
+    
     if (validateCurrentStep() && currentStep < stepTitles.length) {
       setCurrentStep(currentStep + 1);
+      console.log('Advanced to step:', currentStep + 1);
+    } else {
+      console.log('Cannot advance. Validation failed or already at final step.');
     }
   };
 
@@ -858,8 +921,10 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
   };
 
   const handleInputChange = (field, value) => {
+    console.log(`Updating ${field} with value:`, value);
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
+      console.log('Updated form data:', newData);
       return newData;
     });
     if (errors[field]) {
@@ -900,7 +965,14 @@ const AuthModal = ({ mode, setMode, onClose, onSuccess }) => {
 
         <div className="modal-body">
           <form onSubmit={handleSubmit} className="auth-form"
-                onClick={(e) => e.stopPropagation()}>
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  // Prevent form submission on Enter key for multi-step signup
+                  if (e.key === 'Enter' && mode === 'signup' && currentStep !== stepTitles.length) {
+                    e.preventDefault();
+                    console.log('Enter key prevented on step', currentStep);
+                  }
+                }}>
             
             {/* Login Form */}
             {mode === 'login' && (
@@ -1774,6 +1846,32 @@ const StudentNavbar = ({ user, onLogout, notifications = [], onMenuToggle }) => 
   const notificationsArray = Array.isArray(notifications) ? notifications : [];
   const unreadCount = notificationsArray.filter(n => !n.read).length;
   
+  // Handle cases where user might be null or undefined
+  if (!user || !user.full_name) {
+    return (
+      <nav className="student-navbar">
+        <div className="navbar-left">
+          <button className="mobile-menu-toggle" onClick={onMenuToggle}>
+            <Icon name="menu" size={24} />
+          </button>
+          <div className="navbar-brand">
+            <Icon name="book-open" size={28} />
+            <span className="brand-text">CampusConnect</span>
+          </div>
+        </div>
+        <div className="navbar-actions">
+          <div className="user-profile">
+            <div className="user-info">
+              <span className="user-name">Loading...</span>
+              <span className="user-subtitle">Please wait</span>
+            </div>
+            <div className="user-avatar">?</div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+  
   return (
     <nav className="student-navbar">
       <div className="navbar-left">
@@ -1799,7 +1897,7 @@ const StudentNavbar = ({ user, onLogout, notifications = [], onMenuToggle }) => 
         <div className="user-profile">
           <div className="user-info">
             <span className="user-name">{user.full_name}</span>
-            <span className="user-subtitle">{user.major} • {user.year}</span>
+            <span className="user-subtitle">{user.major || 'Student'} • {user.year || 'Year N/A'}</span>
           </div>
           <div className="user-avatar">
             {user.full_name.split(' ').map(name => name[0]).join('').toUpperCase()}

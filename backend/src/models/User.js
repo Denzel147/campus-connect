@@ -1,5 +1,5 @@
-const db = require('../config/database');
 const bcrypt = require('bcryptjs');
+const db = require('../config/database');
 
 class User {
   static async create(userData) {

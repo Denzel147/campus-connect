@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
 const { randomBytes } = require('node:crypto');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const logger = require('../config/logger');
 const { generateVerificationToken, sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
@@ -49,6 +49,9 @@ const register = async (req, res, next) => {
     
     const user = await User.create(userData);
     
+    // Generate tokens for immediate login after registration
+    const { accessToken, refreshToken } = generateTokens(user.user_id);
+    
     // Send verification email (don't block registration if email fails)
     try {
       await sendVerificationEmail(user, verificationToken);
@@ -60,15 +63,21 @@ const register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully. Please check your email to verify your account.',
+      message: 'Registration successful! Please check your email to verify your account.',
       data: {
         user: {
           user_id: user.user_id,
+          full_name: user.full_name,
           email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
+          student_id: user.student_id,
+          major: user.major,
+          year: user.year,
+          campus: user.campus,
+          role: user.role,
           email_verified: user.email_verified
-        }
+        },
+        accessToken,
+        refreshToken
       }
     });
   } catch (error) {
