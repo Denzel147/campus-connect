@@ -277,6 +277,8 @@
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 100;
+  /* Ensure sidebar content doesn't scroll with page */
+  height: calc(100vh - 80px);
 }
 
 .sidebar-open .dashboard-sidebar {
@@ -287,12 +289,17 @@
 @media (min-width: 769px) {
   .dashboard-sidebar {
     transform: translateX(0);
-    position: relative;
-    top: 0;
+    position: fixed;
+    top: 80px;
+    /* Ensure it stays fixed and doesn't scroll with content */
   }
   
   .dashboard-content {
     display: flex;
+  }
+  
+  .dashboard-main {
+    margin-left: 280px; /* Make room for the fixed sidebar */
   }
 }
 

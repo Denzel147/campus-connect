@@ -15,6 +15,15 @@ const createItem = async (req, res, next) => {
 
     const item = await Item.create(itemData, req.user.userId);
 
+    // Get the full item details with category name and other joined data
+    const fullItem = await Item.findById(item.item_id);
+
+    // Add image data 
+    const itemWithImage = {
+      ...fullItem,
+      image: generateImageSizes(fullItem.item_name, fullItem.category, fullItem.condition)
+    };
+
     logger.info(`New item created: ${item.item_name} by user ${req.user.userId}`);
 
     // Send real-time notification to interested users (same campus/category)
@@ -27,7 +36,7 @@ const createItem = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Item created successfully',
-      data: { item }
+      data: { item: itemWithImage }
     });
   } catch (error) {
     logger.error('Create item error:', error);

@@ -2979,7 +2979,7 @@ const AddItemModal = ({ onClose, onSuccess }) => {
       // Clean up preview URLs
       imagePreviewUrls.forEach(url => URL.revokeObjectURL(url));
       
-      onSuccess(response.data);
+      onSuccess(response.data.item);
     } catch (error) {
       setErrors({ general: error.message });
     }
